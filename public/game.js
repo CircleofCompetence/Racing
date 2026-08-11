@@ -160,8 +160,18 @@ function createObstacle(type){
     const pole=matte(0xf3b62d,.44), base= cylinder(2.7,2.9,.55,matte(0x38aee0,.46),26);base.position.y=.28;g.add(shadow(base));const post=cylinder(.22,.3,5.7,pole,14);post.position.y=3.1;g.add(shadow(post));const ringColors=[0xf13b50,0xff9138,0xffd447,0x56cf79,0x4c9ef2];ringColors.forEach((ringColor,i)=>{const ring=new THREE.Mesh(new THREE.TorusGeometry(2.1-i*.3,.3,12,28),matte(ringColor,.4));ring.rotation.x=Math.PI/2;ring.position.y=.85+i*.78;g.add(shadow(ring));});const top=new THREE.Mesh(new THREE.SphereGeometry(.48,14,10),pole);top.position.y=6.05;g.add(shadow(top));radius=2.15;
   } else if(type==="bunny"){
     const fur=matte(0xf2eee8,.88), pink=matte(0xff9fba,.78), dark=matte(0x211b22,.65);const body=new THREE.Mesh(new THREE.SphereGeometry(2.05,22,16),fur);body.scale.set(.9,1.18,.82);body.position.y=2.35;g.add(shadow(body));const head=new THREE.Mesh(new THREE.SphereGeometry(1.65,22,16),fur);head.position.set(0,5.05,.15);g.add(shadow(head));for(const x of[-.7,.7]){const ear=new THREE.Mesh(new THREE.SphereGeometry(.62,18,12),fur);ear.scale.set(.7,2.05,.62);ear.position.set(x,7.15,0);ear.rotation.z=x*.12;g.add(shadow(ear));const inner=new THREE.Mesh(new THREE.SphereGeometry(.36,14,10),pink);inner.scale.set(.55,1.9,.36);inner.position.set(x,7.17,.53);inner.rotation.z=x*.12;g.add(inner);const eye=new THREE.Mesh(new THREE.SphereGeometry(.18,12,8),dark);eye.position.set(x*.72,5.35,1.67);g.add(eye)}const nose=new THREE.Mesh(new THREE.SphereGeometry(.2,12,8),pink);nose.position.set(0,4.92,1.82);g.add(nose);radius=1.9;
-  } else if(type==="dino"){
-    const green=matte(0x55bf70,.66), light=matte(0xa9e47f,.7), dark=matte(0x183524,.55), white=matte(0xfff4d8,.72);const body=new THREE.Mesh(new THREE.SphereGeometry(2.25,22,15),green);body.scale.set(1.25,.9,.78);body.position.y=2.35;g.add(shadow(body));const head=new THREE.Mesh(new THREE.SphereGeometry(1.4,20,14),green);head.position.set(.65,4.55,.72);g.add(shadow(head));const snout=box(1.85,.75,1.45,light);snout.position.set(.65,4.18,1.88);g.add(shadow(snout));for(const x of[.15,1.15]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.18,12,8),dark);eye.position.set(x,4.95,1.78);g.add(eye)}for(const x of[-1.35,1.35])for(const z of[-.65,.65]){const leg=cylinder(.52,.66,1.65,green,14);leg.position.set(x,.82,z);g.add(shadow(leg));}for(const x of[-1.35,1.35]){const arm=cylinder(.16,.22,1.15,light,10);arm.rotation.z=x*.48;arm.position.set(x*.58,3.15,1.25);g.add(shadow(arm));}for(const x of[-.58,-.18,.22,.62]){const tooth=new THREE.Mesh(new THREE.ConeGeometry(.1,.34,8),white);tooth.rotation.x=Math.PI;tooth.position.set(x+.65,3.72,2.58);g.add(tooth)}const tail=new THREE.Mesh(new THREE.ConeGeometry(.72,4.4,16),green);tail.rotation.z=Math.PI/2;tail.position.set(-3.55,2.5,0);g.add(shadow(tail));radius=2.5;
+  } else if(type==="trex"){
+    const skin=matte(0xa75a2d,.7), belly=matte(0xd28a4c,.75), dark=matte(0x21130d,.5), toothMat=matte(0xfff3cf,.78);
+    const torso=new THREE.Mesh(new THREE.SphereGeometry(2.2,22,16),skin);torso.scale.set(1.28,1,.78);torso.position.set(-.35,2.55,0);g.add(shadow(torso));
+    const neck=new THREE.Mesh(new THREE.SphereGeometry(1.25,18,13),skin);neck.scale.set(.9,1.25,.75);neck.position.set(1.15,3.75,0);neck.rotation.z=-.38;g.add(shadow(neck));
+    const head=new THREE.Mesh(new THREE.SphereGeometry(1.3,20,14),skin);head.scale.set(1.3,.9,.78);head.position.set(2.2,4.65,0);g.add(shadow(head));
+    const upperJaw=box(2.15,.68,1.45,skin);upperJaw.position.set(3.05,4.38,.05);g.add(shadow(upperJaw));
+    const lowerJaw=box(1.95,.38,1.3,belly);lowerJaw.position.set(3.02,3.86,.08);lowerJaw.rotation.z=-.08;g.add(shadow(lowerJaw));
+    for(const x of[2.3,2.7,3.1,3.5]){const topTooth=new THREE.Mesh(new THREE.ConeGeometry(.1,.34,8),toothMat);topTooth.rotation.z=Math.PI;topTooth.position.set(x,3.98,.77);g.add(topTooth);const bottomTooth=new THREE.Mesh(new THREE.ConeGeometry(.08,.27,8),toothMat);bottomTooth.position.set(x+.16,4.08,.77);g.add(bottomTooth)}
+    const eyeWhite=new THREE.Mesh(new THREE.SphereGeometry(.22,12,9),toothMat);eyeWhite.position.set(2.25,4.92,1.04);g.add(eyeWhite);const eye=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),dark);eye.position.set(2.3,4.93,1.22);g.add(eye);
+    for(const x of[-1.25,.65]){const thigh=new THREE.Mesh(new THREE.SphereGeometry(.78,16,12),skin);thigh.scale.set(.8,1.35,.8);thigh.position.set(x,1.2,.62);g.add(shadow(thigh));const shin=cylinder(.34,.52,1.45,skin,14);shin.position.set(x,.55,.62);shin.rotation.z=x<0?.18:-.18;g.add(shadow(shin));const foot=box(1.15,.3,.72,belly);foot.position.set(x+.32,.16,1.0);g.add(shadow(foot));}
+    for(const x of[1.05,1.55]){const arm=cylinder(.12,.18,.86,belly,10);arm.rotation.z=-.78;arm.position.set(x,3.35,.85);g.add(shadow(arm));}
+    const tail=new THREE.Mesh(new THREE.ConeGeometry(.82,5.8,18),skin);tail.rotation.z=Math.PI/2;tail.position.set(-4.05,2.62,0);g.add(shadow(tail));radius=2.7;
   } else if(type==="toycar"){
     const toy=matte(color,.3,.35), dark=matte(0x171c24,.32,.55), glass=matte(0x72d8f5,.18,.4);const base=box(5.6,1.05,3.25,toy);base.position.y=1.05;g.add(shadow(base));const hood=box(4.9,.72,1.25,toy);hood.position.set(0,1.75,1.05);g.add(shadow(hood));const cabin=box(3.25,1.65,1.65,glass);cabin.position.set(0,2.45,-.45);g.add(shadow(cabin));for(const x of[-2.65,2.65])for(const z of[-1.05,1.05]){const wheel=cylinder(.68,.68,.34,dark,18);wheel.rotation.z=Math.PI/2;wheel.position.set(x,.72,z);g.add(shadow(wheel));}for(const x of[-1.65,1.65]){const lamp=new THREE.Mesh(new THREE.SphereGeometry(.25,12,8),new THREE.MeshBasicMaterial({color:0xfff4a8}));lamp.position.set(x,1.55,1.69);g.add(lamp)}radius=2.35;
   } else {
@@ -169,7 +179,7 @@ function createObstacle(type){
   }
   const visual=new THREE.Group();while(g.children.length)visual.add(g.children[0]);
   visual.traverse(node=>{if(node.isMesh)node.castShadow=false});
-  const characterTypes=["duck","robot","teddy","bunny","dino"],isCharacter=characterTypes.includes(type);let poseY=0;
+  const characterTypes=["duck","robot","teddy","bunny","trex"],isCharacter=characterTypes.includes(type);let poseY=0;
   if(isCharacter){visual.rotation.y=(Math.random()-.5)*1.5;const poseRoll=Math.random();if(poseRoll<.2){visual.rotation.z=(Math.random()<.5?-1:1)*(1.18+Math.random()*.28);poseY=radius*.9}else{visual.rotation.z=(Math.random()-.5)*.2}}
   else if(type!=="ball"){visual.rotation.y=(Math.random()-.5)*(type==="book"||type==="pencil"?1.1:.55);visual.rotation.z=(Math.random()-.5)*.05}
   visual.position.y=poseY;g.add(visual);
@@ -185,7 +195,7 @@ function createBoostPickup(){
   const glow=new THREE.PointLight(0xffc328,2.2,8);glow.position.z=1;g.add(glow);g.position.y=2.05;g.userData={phase:Math.random()*Math.PI*2,baseY:2.05};return g;
 }
 
-const obstacleKinds=["block","block","block","ball","cup","book","pencil","duck","robot","train","drum","rings","teddy","bunny","dino","toycar"], obstacles=[], pickups=[];
+const obstacleKinds=["block","block","block","ball","cup","book","pencil","duck","robot","train","drum","rings","teddy","bunny","trex","toycar"], obstacles=[], pickups=[];
 const laneX=[-5.6,-2.8,0,2.8,5.6];
 let cockpitView=false,safeLane=2,running=false,elapsed=0,distance=0,energy=100,speed=0,baseSpeed=650,spawnClock=0,boostTimer=0,jumpY=0,jumpV=0,lastPickupAt=-20,invincible=0,shake=0,last=performance.now();
 const control={left:false,right:false}, carMotion={x:0,vx:0};

@@ -53,7 +53,8 @@ test("game rules include five-second boost and ten-hit energy", async () => {
   assert.match(js, /type==="rings"/);
   assert.match(js, /SphereGeometry\(\.36,16,12\)/);
   assert.match(js, /type==="bunny"/);
-  assert.match(js, /type==="dino"/);
+  assert.match(js, /type==="trex"/);
+  assert.doesNotMatch(js, /type==="dino"|"dino"/);
   assert.match(js, /type==="toycar"/);
   assert.match(js, /new THREE\.ConeGeometry\(\.42,1\.28,12\)/);
   assert.match(js, /elapsed-lastPickupAt>4\.2/);
@@ -61,7 +62,9 @@ test("game rules include five-second boost and ten-hit energy", async () => {
   assert.match(js, /o\.frequency\.exponentialRampToValueAtTime\(620/);
   assert.match(js, /function makeCockpit\(\)/);
   assert.match(js, /function toggleView\(\)/);
-  assert.match(js, /cockpitView\?\(boostTimer>0\?83:73\)/);
+  assert.match(js, /cockpitView\?\(boostTimer>0\?86:77\)/);
+  assert.match(js, /characterTypes=\["duck","robot","teddy","bunny","trex"\]/);
+  assert.match(js, /poseRoll<\.2/);
   assert.match(js, /await import\("\.\/vendor\/three\.module\.js"\)/);
   assert.match(js, /cdn\.jsdelivr\.net\/npm\/three@0\.185\.1/);
 });
