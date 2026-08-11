@@ -13,13 +13,16 @@ test("GitHub Pages entry contains the complete mobile game UI", async () => {
   }
   assert.match(html, /public\/game\.css/);
   assert.match(html, /public\/game\.js/);
+  assert.doesNotMatch(html, /거대한 거실을 질주|좌우 이동|충돌하면|5초 부스터|세로 화면 추천/);
 });
 
 test("game rules include five-second boost and ten-hit energy", async () => {
   const js = await readFile(new URL("public/game.js", root), "utf8");
   assert.match(js, /boostTimer=5/);
   assert.match(js, /energy=Math\.max\(0,energy-10\)/);
-  assert.match(js, /baseSpeed=Math\.min\(720,370\+elapsed\*4\.2\)/);
+  assert.match(js, /baseSpeed=Math\.min\(780,410\+elapsed\*4\.6\)/);
+  assert.match(js, /TorusGeometry\(1\.28,\.3,14,32\)/);
+  assert.doesNotMatch(js, /handle\.rotation\.y=Math\.PI\/2/);
   assert.match(js, /g\.scale\.setScalar\(\.58\)/);
   assert.match(js, /const laneX=\[-5\.6,-2\.8,0,2\.8,5\.6\]/);
   assert.match(js, /PerspectiveCamera/);
@@ -29,6 +32,8 @@ test("game rules include five-second boost and ten-hit energy", async () => {
   assert.match(js, /AudioContext/);
   assert.match(js, /startRace\(\)/);
   assert.doesNotMatch(js, /labelTexture|fromCharCode/);
+  assert.match(js, /rollTarget\.rotation\.x\+=units\/2\.65/);
+  assert.doesNotMatch(js, /type==="ball"\)o\.rotation\.x/);
 });
 
 test("hosted app points at the standalone game", async () => {

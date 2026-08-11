@@ -34,16 +34,12 @@ button { font:inherit; }
 h1 { position:relative; margin:0; padding:17px 12px 19px; font-size:clamp(52px,17vw,78px); font-style:italic; line-height:.72; letter-spacing:-.045em; color:#fff; background:linear-gradient(135deg,#090b10f2,#251019f2); border:3px solid #fff; clip-path:polygon(7% 0,100% 0,93% 100%,0 100%); -webkit-text-stroke:2px #8d001a; text-shadow:0 0 10px #ff3049,4px 5px 0 #4c0010,8px 9px 0 #000; filter:drop-shadow(0 10px 16px #000c); transform:skew(-5deg); }
 h1 em { display:block; color:#ffd447; font-size:.61em; letter-spacing:.035em; margin-top:20px; -webkit-text-stroke:1px #5f3600; text-shadow:0 0 9px #ffb000,3px 4px 0 #4c2200,6px 7px 0 #000; }
 .tagline { margin:28px auto 18px; max-width:320px; font:700 15px/1.55 system-ui,sans-serif; color:#e7e9ee; }
-.tips { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin:17px 0; }
-.tip { padding:10px 5px; border:1px solid #fff3; background:#fff1; border-radius:10px; }
-.tip b { display:block; color:#ffd447; font-size:18px; margin-bottom:3px; }
-.tip span { font:700 10px/1.3 system-ui,sans-serif; color:#cfd3dc; }
-.start { width:100%; min-height:64px; border:0; clip-path:polygon(5% 0,100% 0,95% 100%,0 100%); background:#ff3049; color:#fff; font-size:23px; font-style:italic; letter-spacing:.06em; box-shadow:inset 0 -8px 0 #a60020; cursor:pointer; }
+.tagline:empty { display:none; }
+.start { width:100%; min-height:64px; margin-top:24px; border:0; clip-path:polygon(5% 0,100% 0,95% 100%,0 100%); background:#ff3049; color:#fff; font-size:23px; font-style:italic; letter-spacing:.06em; box-shadow:inset 0 -8px 0 #a60020; cursor:pointer; }
 .start:active { transform:translateY(3px); }
-.sound-note { margin-top:10px; font:600 10px/1.4 system-ui,sans-serif; color:#858b98; }
 .final-score { display:none; margin:24px 0 12px; }
 .final-score.show { display:block; }
 .final-score b { display:block; font-size:42px; color:#ffd447; font-style:italic; }
 .final-score span { font:800 11px/1 system-ui,sans-serif; letter-spacing:.18em; }
-@media (max-height:670px) { .ctrl{min-height:58px}.speed{top:68px}.boost-state{top:81px}.tagline{margin:20px auto 10px}.tips{margin:10px 0}.panel{transform:scale(.92)} }
+@media (max-height:670px) { .ctrl{min-height:58px}.speed{top:68px}.boost-state{top:81px}.tagline{margin:20px auto 10px}.panel{transform:scale(.92)} }
 @media (min-width:600px) { .hud,.controls,.speed { max-width:520px; margin-inline:auto; } }
