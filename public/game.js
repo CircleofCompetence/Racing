@@ -93,7 +93,7 @@ function makeCar(){
   const plate=box(.5,.13,.03,matte(0xf5f5f2));plate.position.set(0,.34,1.19);g.add(plate);
   const boostMat=new THREE.MeshBasicMaterial({color:0x50dfff,transparent:true,opacity:0});
   g.userData.flames=[];for(const x of[-.32,.32]){const flame=new THREE.Mesh(new THREE.ConeGeometry(.13,1.6,10),boostMat.clone());flame.rotation.x=Math.PI/2;flame.position.set(x,.32,1.85);g.add(flame);g.userData.flames.push(flame);}
-  g.scale.setScalar(.58);g.position.set(0,0,3.2);return g;
+  g.scale.setScalar(.46);g.position.set(0,0,3.2);return g;
 }
 const car=makeCar();scene.add(car);
 
@@ -180,7 +180,12 @@ function createObstacle(type){
   const visual=new THREE.Group();while(g.children.length)visual.add(g.children[0]);
   visual.traverse(node=>{if(node.isMesh)node.castShadow=false});
   const characterTypes=["duck","robot","teddy","bunny","trex"],isCharacter=characterTypes.includes(type);let poseY=0;
-  if(isCharacter){visual.rotation.y=(Math.random()-.5)*1.5;const poseRoll=Math.random();if(poseRoll<.2){visual.rotation.z=(Math.random()<.5?-1:1)*(1.18+Math.random()*.28);poseY=radius*.9}else{visual.rotation.z=(Math.random()-.5)*.2}}
+  if(isCharacter){
+    visual.rotation.y=(Math.random()-.5)*1.5;const poseRoll=Math.random();
+    if(poseRoll<.12)visual.rotation.x=-Math.PI/2;
+    else if(poseRoll<.25)visual.rotation.z=(Math.random()<.5?-1:1)*Math.PI/2;
+    visual.updateMatrixWorld(true);const poseBounds=new THREE.Box3().setFromObject(visual);poseY=Math.max(.02,-poseBounds.min.y+.02);
+  }
   else if(type!=="ball"){visual.rotation.y=(Math.random()-.5)*(type==="book"||type==="pencil"?1.1:.55);visual.rotation.z=(Math.random()-.5)*.05}
   visual.position.y=poseY;g.add(visual);
   const blob=new THREE.Mesh(new THREE.CircleGeometry(Math.max(1.05,radius*1.15),28),new THREE.MeshBasicMaterial({color:0x050505,transparent:true,opacity:.3,depthWrite:false}));blob.rotation.x=-Math.PI/2;blob.scale.y=.58;blob.position.y=.026;blob.renderOrder=-1;g.add(blob);
