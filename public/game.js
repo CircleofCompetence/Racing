@@ -3,7 +3,7 @@ import * as THREE from "./vendor/three.module.js";
 const canvas = document.getElementById("game");
 const ui = Object.fromEntries([
   "overlay","start","energy","distance","speed","boost","boostText","boostState",
-  "left","right","title","tagline","eyebrow","finalScore","finalDistance","tips"
+  "left","right","soundToggle","title","tagline","eyebrow","finalScore","finalDistance","tips"
 ].map(id => [id, document.getElementById(id)]));
 
 const scene = new THREE.Scene();
@@ -75,58 +75,76 @@ function makeCar(){
   const plate=box(.5,.13,.03,matte(0xf5f5f2));plate.position.set(0,.34,1.19);g.add(plate);
   const boostMat=new THREE.MeshBasicMaterial({color:0x50dfff,transparent:true,opacity:0});
   g.userData.flames=[];for(const x of[-.32,.32]){const flame=new THREE.Mesh(new THREE.ConeGeometry(.13,1.6,10),boostMat.clone());flame.rotation.x=Math.PI/2;flame.position.set(x,.32,1.85);g.add(flame);g.userData.flames.push(flame);}
-  g.scale.setScalar(.82);g.position.set(0,0,3.2);return g;
+  g.scale.setScalar(.58);g.position.set(0,0,3.2);return g;
 }
 const car=makeCar();scene.add(car);
 
-function labelTexture(letter,color="#fff"){
-  const c=document.createElement("canvas");c.width=c.height=256;const x=c.getContext("2d");x.fillStyle=color;x.font="900 160px Arial";x.textAlign="center";x.textBaseline="middle";x.fillText(letter,128,138);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;
-}
 function createObstacle(type){
   const g=new THREE.Group();let radius=2, color=[0xff3150,0x3fc7ff,0xffcc31,0x7ddd58,0xaa71ff][Math.floor(Math.random()*5)];
   if(type==="block"){
-    const m=matte(color,.48);const cube=box(4.5,4.5,4.5,m);cube.position.y=2.25;g.add(shadow(cube));
-    const face=new THREE.Mesh(new THREE.PlaneGeometry(2.7,2.7),new THREE.MeshBasicMaterial({map:labelTexture(String.fromCharCode(65+Math.floor(Math.random()*6))),transparent:true}));face.position.set(0,2.25,2.256);g.add(face);radius=2.35;
+    const m=matte(color,.4), accent=matte(new THREE.Color(color).multiplyScalar(.72),.48);
+    const cube=box(4.4,4.2,4.4,m);cube.position.y=2.1;g.add(shadow(cube));
+    const panel=box(3.25,2.8,.16,accent);panel.position.set(0,2.05,2.25);g.add(shadow(panel));
+    for(const x of[-1.15,1.15])for(const z of[-1.15,1.15]){const stud=cylinder(.58,.58,.38,m,18);stud.position.set(x,4.38,z);g.add(shadow(stud));}
+    for(const x of[-1.05,1.05])for(const y of[1.35,2.75]){const dot=cylinder(.34,.34,.2,m,16);dot.rotation.x=Math.PI/2;dot.position.set(x,y,2.42);g.add(shadow(dot));}radius=1.7;
   } else if(type==="ball"){
-    const ball=new THREE.Mesh(new THREE.SphereGeometry(2.65,22,16),matte(color,.55));ball.position.y=2.65;g.add(shadow(ball));const stripe=new THREE.Mesh(new THREE.TorusGeometry(2.67,.14,10,28),matte(0xf9f4dd,.5));stripe.position.y=2.65;stripe.rotation.y=Math.PI/2;g.add(stripe);radius=2.55;
+    const ball=new THREE.Mesh(new THREE.SphereGeometry(2.65,26,20),matte(color,.45));ball.position.y=2.65;g.add(shadow(ball));for(const rot of[0,Math.PI/2]){const stripe=new THREE.Mesh(new THREE.TorusGeometry(2.67,.13,10,34),matte(0xfff4d2,.4));stripe.position.y=2.65;stripe.rotation.set(Math.PI/2,rot,0);g.add(stripe);}radius=1.9;
   } else if(type==="cup"){
-    const cup=cylinder(2.2,1.65,6.5,matte(color,.35),24);cup.position.y=3.25;g.add(shadow(cup));const rim=new THREE.Mesh(new THREE.TorusGeometry(2.2,.14,10,28),matte(0xffffff,.25));rim.rotation.x=Math.PI/2;rim.position.y=6.5;g.add(rim);const handle=new THREE.Mesh(new THREE.TorusGeometry(1.5,.28,12,24,Math.PI*1.55),matte(color,.35));handle.position.set(2.1,3.7,0);handle.rotation.y=Math.PI/2;g.add(shadow(handle));radius=2.5;
+    const cupMat=matte(color,.28);const cup=cylinder(2.2,1.65,6.5,cupMat,28);cup.position.y=3.25;g.add(shadow(cup));const rim=new THREE.Mesh(new THREE.TorusGeometry(2.2,.14,10,32),matte(0xffffff,.2));rim.rotation.x=Math.PI/2;rim.position.y=6.5;g.add(rim);const handle=new THREE.Mesh(new THREE.TorusGeometry(1.5,.28,12,28,Math.PI*1.55),cupMat);handle.position.set(2.1,3.7,0);handle.rotation.y=Math.PI/2;g.add(shadow(handle));const band=new THREE.Mesh(new THREE.TorusGeometry(1.86,.08,8,32),matte(0xffffff,.35));band.rotation.x=Math.PI/2;band.position.y=4.3;g.add(band);radius=1.75;
   } else if(type==="book"){
-    const cover=box(7.4,.75,5.2,matte(color,.5));cover.position.y=.55;cover.rotation.y=(Math.random()-.5)*.5;g.add(shadow(cover));const pages=box(6.9,.58,4.8,matte(0xf3e4bd,.95));pages.position.y=.92;pages.rotation.y=cover.rotation.y;g.add(shadow(pages));radius=3.4;
+    const angle=(Math.random()-.5)*.35, coverMat=matte(color,.42);const bottom=box(7.4,.22,5.2,coverMat);bottom.position.y=.3;bottom.rotation.y=angle;g.add(shadow(bottom));const pages=box(6.95,.62,4.75,matte(0xf3e4bd,.92));pages.position.y=.67;pages.rotation.y=angle;g.add(shadow(pages));const top=box(7.4,.22,5.2,coverMat);top.position.y=1.06;top.rotation.y=angle;g.add(shadow(top));const ribbon=box(.22,.08,4.9,matte(0xffd447,.4));ribbon.position.y=1.19;ribbon.rotation.y=angle;g.add(ribbon);radius=2.35;
   } else if(type==="duck"){
-    const yellow=matte(0xffd21c,.54);const body=new THREE.Mesh(new THREE.SphereGeometry(2.4,20,14),yellow);body.scale.set(1.25,1,.9);body.position.y=2.4;g.add(shadow(body));const head=new THREE.Mesh(new THREE.SphereGeometry(1.65,20,14),yellow);head.position.set(1,5.1,0);g.add(shadow(head));const beak=box(1.7,.55,1.05,matte(0xff751f,.5));beak.position.set(2.15,4.9,0);g.add(shadow(beak));radius=2.9;
+    const yellow=matte(0xffd21c,.46);const body=new THREE.Mesh(new THREE.SphereGeometry(2.4,24,18),yellow);body.scale.set(1.25,1,.9);body.position.y=2.4;g.add(shadow(body));const head=new THREE.Mesh(new THREE.SphereGeometry(1.65,24,18),yellow);head.position.set(1,5.1,0);g.add(shadow(head));const wing=new THREE.Mesh(new THREE.SphereGeometry(1.35,18,12),matte(0xffe55c,.5));wing.scale.set(1.3,.45,.9);wing.position.set(-.7,2.6,1.75);g.add(shadow(wing));const beak=box(1.7,.55,1.05,matte(0xff751f,.42));beak.position.set(2.15,4.9,0);g.add(shadow(beak));for(const z of[-.72,.72]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.16,10,8),matte(0x171717,.25));eye.position.set(1.95,5.45,z);g.add(eye);}radius=2.05;
   } else {
-    const metal=matte(0x78d9e8,.38,.38);const body=box(4.3,4.8,3.5,metal);body.position.y=4.1;g.add(shadow(body));const head=box(3.8,3.1,3.2,metal);head.position.y=8.05;g.add(shadow(head));for(const x of[-.8,.8]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.26,10,8),new THREE.MeshBasicMaterial({color:0xff274c}));eye.position.set(x,8.3,1.64);g.add(eye);}for(const x of[-1.45,1.45]){const leg=box(.9,2.3,.9,metal);leg.position.set(x,1.2,0);g.add(shadow(leg));}radius=2.6;
+    const metal=matte(0x78d9e8,.32,.45), dark=matte(0x274353,.4,.4);const body=box(4.3,4.8,3.5,metal);body.position.y=4.1;g.add(shadow(body));const chest=box(2.8,2.1,.18,dark);chest.position.set(0,4.2,1.84);g.add(shadow(chest));for(const x of[-.75,0,.75]){const lamp=new THREE.Mesh(new THREE.SphereGeometry(.18,10,8),new THREE.MeshBasicMaterial({color:x?0xffd447:0xff3652}));lamp.position.set(x,4.2,1.97);g.add(lamp);}const head=box(3.8,3.1,3.2,metal);head.position.y=8.05;g.add(shadow(head));for(const x of[-.8,.8]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.28,12,10),new THREE.MeshBasicMaterial({color:0xff274c}));eye.position.set(x,8.3,1.64);g.add(eye);}const antenna=cylinder(.1,.1,1.5,dark,10);antenna.position.y=10.35;g.add(antenna);const tip=new THREE.Mesh(new THREE.SphereGeometry(.28,10,8),new THREE.MeshBasicMaterial({color:0xffd447}));tip.position.y=11.1;g.add(tip);for(const x of[-1.45,1.45]){const leg=box(.9,2.3,.9,metal);leg.position.set(x,1.2,0);g.add(shadow(leg));const arm=box(.65,3.7,.7,metal);arm.position.set(x*1.75,4.6,0);arm.rotation.z=x*.16;g.add(shadow(arm));}radius=1.95;
   }
   g.userData={type,radius,hit:false,spin:(Math.random()-.5)*.35};return g;
 }
 
 const obstacleKinds=["block","ball","cup","book","duck","robot"], obstacles=[];
-let running=false,elapsed=0,distance=0,energy=100,speed=0,baseSpeed=245,spawnClock=0,boostTimer=0,boostCooldown=0,invincible=0,shake=0,last=performance.now();
+const laneX=[-5.6,-2.8,0,2.8,5.6];
+let safeLane=2,running=false,elapsed=0,distance=0,energy=100,speed=0,baseSpeed=370,spawnClock=0,boostTimer=0,boostCooldown=0,invincible=0,shake=0,last=performance.now();
 const control={left:false,right:false}, carMotion={x:0,vx:0};
 
 class AudioSystem{
-  init(){if(this.ctx){this.ctx.resume();return}const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;this.ctx=new AC();this.master=this.ctx.createGain();this.master.gain.value=.38;this.master.connect(this.ctx.destination);this.music=this.ctx.createGain();this.music.gain.value=.18;this.music.connect(this.master);this.engineGain=this.ctx.createGain();this.engineGain.gain.value=.02;this.engineGain.connect(this.master);this.filter=this.ctx.createBiquadFilter();this.filter.type="lowpass";this.engine=this.ctx.createOscillator();this.engine.type="sawtooth";this.engine.connect(this.filter);this.filter.connect(this.engineGain);this.engine.start();this.next=this.ctx.currentTime;this.beat=0}
-  tone(f,t,d,g,type="square",out=this.music){if(!this.ctx)return;const o=this.ctx.createOscillator(),v=this.ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);v.gain.setValueAtTime(g,t);v.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(v);v.connect(out);o.start(t);o.stop(t+d+.02)}
-  noise(d=.2,g=.16){if(!this.ctx)return;const b=this.ctx.createBuffer(1,this.ctx.sampleRate*d,this.ctx.sampleRate),a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=(Math.random()*2-1)*(1-i/a.length);const s=this.ctx.createBufferSource(),v=this.ctx.createGain();s.buffer=b;v.gain.value=g;s.connect(v);v.connect(this.master);s.start()}
-  boost(){if(!this.ctx)return;const t=this.ctx.currentTime;[180,260,390,580].forEach((f,i)=>this.tone(f,t+i*.06,.24,.11,"sawtooth",this.engineGain));this.noise(.5,.08)}
-  crash(){if(!this.ctx)return;this.noise(.35,.3);const t=this.ctx.currentTime;this.tone(75,t,.4,.3,"sawtooth",this.engineGain)}
-  over(){if(!this.ctx)return;const t=this.ctx.currentTime;[330,247,185,92].forEach((f,i)=>this.tone(f,t+i*.17,.35,.13,"sawtooth"))}
-  update(){if(!this.ctx)return;const r=speed/650;this.engine.frequency.setTargetAtTime(58+r*160+(boostTimer>0?42:0),this.ctx.currentTime,.05);this.filter.frequency.setTargetAtTime(260+r*1200,this.ctx.currentTime,.06);this.engineGain.gain.setTargetAtTime(running?.055+(boostTimer>0?.035:0):.012,this.ctx.currentTime,.1);while(running&&this.next<this.ctx.currentTime+.12){const step=this.beat%16,bass=[55,65.4,49,73.4][Math.floor(this.beat/4)%4];this.tone(bass*(step%4===2?2:1),this.next,.11,step%4===0?.11:.045,"sawtooth");if(step%2===0)this.tone(step%4?740:980,this.next,.035,.025);this.next+=boostTimer>0?.125:Math.max(.15,.22-elapsed*.0005);this.beat++}}
+  init(){
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;
+    if(this.ctx){this.ctx.resume?.();return true}
+    try{this.ctx=new AC({latencyHint:"interactive"})}catch{this.ctx=new AC()}
+    this.compressor=this.ctx.createDynamicsCompressor();this.compressor.threshold.value=-18;this.compressor.knee.value=16;this.compressor.ratio.value=5;this.compressor.attack.value=.003;this.compressor.release.value=.22;this.compressor.connect(this.ctx.destination);
+    this.master=this.ctx.createGain();this.master.gain.value=.78;this.master.connect(this.compressor);
+    this.music=this.ctx.createGain();this.music.gain.value=.3;this.music.connect(this.master);
+    this.engineGain=this.ctx.createGain();this.engineGain.gain.value=.001;this.engineGain.connect(this.master);
+    this.filter=this.ctx.createBiquadFilter();this.filter.type="lowpass";this.filter.Q.value=3.5;this.filter.connect(this.engineGain);
+    this.engine=this.ctx.createOscillator();this.engine.type="sawtooth";this.engine.connect(this.filter);this.engine.start();
+    this.engine2=this.ctx.createOscillator();this.engine2.type="square";this.engine2.detune.value=-1200;const sub=this.ctx.createGain();sub.gain.value=.18;this.engine2.connect(sub);sub.connect(this.filter);this.engine2.start();
+    const silent=this.ctx.createBufferSource();silent.buffer=this.ctx.createBuffer(1,1,this.ctx.sampleRate);silent.connect(this.master);silent.start(0);
+    this.next=this.ctx.currentTime;this.beat=0;this.ctx.resume?.();return true
+  }
+  tone(f,t,d,g,type="square",out=this.music){if(!this.ctx||!out)return;const o=this.ctx.createOscillator(),v=this.ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);v.gain.setValueAtTime(Math.max(.001,g),t);v.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(v);v.connect(out);o.start(t);o.stop(t+d+.03)}
+  noise(d=.2,g=.16,frequency=1400){if(!this.ctx)return;const size=Math.floor(this.ctx.sampleRate*d),b=this.ctx.createBuffer(1,size,this.ctx.sampleRate),a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=(Math.random()*2-1)*(1-i/a.length);const s=this.ctx.createBufferSource(),f=this.ctx.createBiquadFilter(),v=this.ctx.createGain();s.buffer=b;f.type="bandpass";f.frequency.value=frequency;f.Q.value=.7;v.gain.value=g;s.connect(f);f.connect(v);v.connect(this.master);s.start()}
+  kick(t){if(!this.ctx)return;const o=this.ctx.createOscillator(),v=this.ctx.createGain();o.frequency.setValueAtTime(145,t);o.frequency.exponentialRampToValueAtTime(48,t+.12);v.gain.setValueAtTime(.25,t);v.gain.exponentialRampToValueAtTime(.001,t+.16);o.connect(v);v.connect(this.music);o.start(t);o.stop(t+.17)}
+  startRace(){if(!this.init())return;this.ctx.resume?.();const t=this.ctx.currentTime+.02;[262,392,523,784].forEach((f,i)=>this.tone(f,t+i*.075,.3,.2,"sawtooth",this.music));this.next=t+.32;this.beat=0}
+  enable(){if(!this.init())return;this.master.gain.setTargetAtTime(.78,this.ctx.currentTime,.03);this.ctx.resume?.();const t=this.ctx.currentTime+.01;this.tone(660,t,.1,.14,"sine",this.music);this.tone(990,t+.08,.16,.14,"sine",this.music)}
+  boost(){if(!this.init())return;this.ctx.resume?.();const t=this.ctx.currentTime;[180,270,405,610,820].forEach((f,i)=>this.tone(f,t+i*.045,.28,.18,"sawtooth",this.engineGain));this.noise(.55,.18,1900)}
+  crash(){if(!this.init())return;this.ctx.resume?.();this.noise(.42,.42,650);const t=this.ctx.currentTime;this.tone(82,t,.48,.38,"sawtooth",this.engineGain);this.tone(47,t,.55,.28,"square",this.engineGain)}
+  over(){if(!this.init())return;const t=this.ctx.currentTime;[392,294,220,147,82].forEach((f,i)=>this.tone(f,t+i*.16,.4,.18,"sawtooth"))}
+  update(){if(!this.ctx)return;if(this.ctx.state==="suspended")return;const r=speed/900;this.engine.frequency.setTargetAtTime(72+r*210+(boostTimer>0?55:0),this.ctx.currentTime,.04);this.engine2.frequency.setTargetAtTime(72+r*210,this.ctx.currentTime,.05);this.filter.frequency.setTargetAtTime(420+r*1800,this.ctx.currentTime,.05);this.engineGain.gain.setTargetAtTime(running?.12+(boostTimer>0?.055:0):.001,this.ctx.currentTime,.08);while(running&&this.next<this.ctx.currentTime+.14){const step=this.beat%16,bar=Math.floor(this.beat/16),bass=[55,65.4,49,73.4][Math.floor(this.beat/4)%4];if(step%4===0)this.kick(this.next);this.tone(bass*(step%4===2?2:1),this.next,.13,step%4===0?.16:.07,"sawtooth");if(step%2===0)this.tone([440,523,659,784][(step/2+bar)%4],this.next,.07,.055,"square");if(step===4||step===12)this.tone(1800,this.next,.025,.035,"square");this.next+=boostTimer>0?.105:.135;this.beat++}}
 }
 const audio=new AudioSystem();
 
 function spawn(){
-  const count=elapsed>45&&Math.random()<Math.min(.55,(elapsed-45)/100)?2:1;
-  const lanes=count===2?[-4.8+Math.random()*1.5,3.3+Math.random()*1.5]:[-6+Math.random()*12];
-  for(const x of lanes){const o=createObstacle(obstacleKinds[Math.floor(Math.random()*obstacleKinds.length)]);o.position.set(x,0,-90-Math.random()*12);scene.add(o);obstacles.push(o);}
+  if(Math.random()<.58){const step=Math.random()<.5?-1:1;safeLane=THREE.MathUtils.clamp(safeLane+step,0,4)}
+  const candidates=[0,1,2,3,4].filter(i=>Math.abs(i-safeLane)>1).sort(()=>Math.random()-.5);
+  const count=elapsed>25&&candidates.length>1&&Math.random()<Math.min(.64,.28+elapsed*.004)?2:1;
+  for(const lane of candidates.slice(0,count)){const o=createObstacle(obstacleKinds[Math.floor(Math.random()*obstacleKinds.length)]);o.position.set(laneX[lane]+(Math.random()-.5)*.24,0,-105);scene.add(o);obstacles.push(o);}
 }
-function hit(o){if(o.userData.hit||invincible>0)return;const dz=Math.abs(o.position.z-car.position.z);if(dz<2.1&&Math.abs(o.position.x-car.position.x)<o.userData.radius+.52){o.userData.hit=true;energy=Math.max(0,energy-10);invincible=1.25;shake=.55;ui.energy.style.width=energy+"%";audio.crash();navigator.vibrate?.([80,35,100]);o.rotation.z+=(car.position.x-o.position.x)*.25;if(energy<=0)endGame();}}
+function hit(o){if(o.userData.hit||invincible>0)return;const dz=Math.abs(o.position.z-car.position.z);if(dz<1.85&&Math.abs(o.position.x-car.position.x)<o.userData.radius+.3){o.userData.hit=true;energy=Math.max(0,energy-10);invincible=1.25;shake=.55;ui.energy.style.width=energy+"%";audio.crash();navigator.vibrate?.([80,35,100]);o.rotation.z+=(car.position.x-o.position.x)*.25;if(energy<=0)endGame();}}
 function updateWorld(dt){
-  if(!running)return;elapsed+=dt;invincible=Math.max(0,invincible-dt);boostTimer=Math.max(0,boostTimer-dt);boostCooldown=Math.max(0,boostCooldown-dt);baseSpeed=Math.min(560,245+elapsed*3.1);speed=baseSpeed+(boostTimer>0?230:0);const units=speed*.043*dt;
-  const dir=(control.left?-1:0)+(control.right?1:0);carMotion.vx+=dir*dt*20;carMotion.vx*=Math.pow(.018,dt);carMotion.x=THREE.MathUtils.clamp(carMotion.x+carMotion.vx*dt,-6.25,6.25);car.position.x+=(carMotion.x-car.position.x)*dt*12;car.rotation.z+=(dir*-.14-car.rotation.z)*dt*9;
+  if(!running)return;elapsed+=dt;invincible=Math.max(0,invincible-dt);boostTimer=Math.max(0,boostTimer-dt);boostCooldown=Math.max(0,boostCooldown-dt);baseSpeed=Math.min(720,370+elapsed*4.2);speed=baseSpeed+(boostTimer>0?300:0);const units=speed*.055*dt;
+  const dir=(control.left?-1:0)+(control.right?1:0);carMotion.vx+=dir*dt*34;carMotion.vx*=Math.pow(.025,dt);carMotion.x=THREE.MathUtils.clamp(carMotion.x+carMotion.vx*dt,-6.25,6.25);car.position.x+=(carMotion.x-car.position.x)*dt*15;car.rotation.z+=(dir*-.17-car.rotation.z)*dt*11;
   floorMat.map.offset.y-=units/11;for(const m of laneMarkers){m.position.z+=units;if(m.position.z>14)m.position.z-=130;}
-  spawnClock-=dt;if(spawnClock<=0){spawn();spawnClock=Math.max(.44,1.28-elapsed*.009)*(.8+Math.random()*.45);}
+  spawnClock-=dt;if(spawnClock<=0){spawn();spawnClock=Math.max(.68,1.02-elapsed*.0035)*(.92+Math.random()*.2);}
   for(let i=obstacles.length-1;i>=0;i--){const o=obstacles[i];o.position.z+=units;o.rotation.y+=o.userData.spin*dt;if(o.userData.type==="ball")o.rotation.x+=units*.22;hit(o);if(o.position.z>15){scene.remove(o);o.traverse(n=>{n.geometry?.dispose();if(n.material?.map)n.material.map.dispose();n.material?.dispose()});obstacles.splice(i,1);}}
   distance+=speed*dt/38;ui.distance.textContent=String(Math.floor(distance)).padStart(5,"0");ui.speed.textContent=String(Math.floor(speed)).padStart(3,"0");ui.boostState.classList.toggle("show",boostTimer>0);ui.boost.classList.toggle("cooling",boostCooldown>0);ui.boostText.textContent=boostTimer>0?Math.ceil(boostTimer)+" SEC":boostCooldown>0?Math.ceil(boostCooldown)+" SEC":"READY";
   for(const f of car.userData.flames){f.material.opacity=boostTimer>0?.84:0;f.scale.y=.75+Math.random()*.55;}
@@ -138,11 +156,12 @@ function render(){
 function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;updateWorld(dt);render()}
 
 function clearObstacles(){while(obstacles.length){const o=obstacles.pop();scene.remove(o);o.traverse(n=>{n.geometry?.dispose();if(n.material?.map)n.material.map.dispose();n.material?.dispose()})}}
-function startGame(){audio.init();running=true;elapsed=distance=0;energy=100;baseSpeed=speed=245;spawnClock=.65;boostTimer=boostCooldown=invincible=0;carMotion.x=carMotion.vx=0;car.position.x=0;car.visible=true;clearObstacles();ui.energy.style.width="100%";ui.finalScore.classList.remove("show");ui.tips.style.display="grid";ui.eyebrow.textContent="";ui.title.innerHTML="MINI<em>Racer</em>";ui.tagline.innerHTML="거대한 집 안을 질주하라! 장난감을 피하고<br>부스터로 최고 기록을 깨뜨리세요.";ui.start.textContent="ENGINE START";ui.overlay.classList.add("hidden")}
+function startGame(){audio.startRace();running=true;elapsed=distance=0;energy=100;baseSpeed=speed=370;spawnClock=.8;boostTimer=boostCooldown=invincible=0;safeLane=2;carMotion.x=carMotion.vx=0;car.position.x=0;car.visible=true;clearObstacles();ui.energy.style.width="100%";ui.finalScore.classList.remove("show");ui.tips.style.display="grid";ui.eyebrow.textContent="";ui.title.innerHTML="MINI<em>Racer</em>";ui.tagline.innerHTML="거대한 집 안을 질주하라! 장난감을 피하고<br>부스터로 최고 기록을 깨뜨리세요.";ui.start.textContent="ENGINE START";ui.overlay.classList.add("hidden")}
 function endGame(){if(!running)return;running=false;speed=0;audio.over();navigator.vibrate?.([100,50,100,50,180]);ui.finalDistance.textContent=Math.floor(distance)+" m";ui.finalScore.classList.add("show");ui.tips.style.display="none";ui.eyebrow.textContent="ENGINE OVERHEATED";ui.title.innerHTML="RACE<em>OVER</em>";ui.tagline.textContent=distance>1500?"거대한 세상을 아주 멀리 달렸어요!":"장난감은 미니카보다 훨씬 커요. 다시 도전할까요?";ui.start.textContent="RESTART RACE";setTimeout(()=>ui.overlay.classList.remove("hidden"),550)}
 function useBoost(){if(!running||boostCooldown>0||boostTimer>0)return;boostTimer=5;boostCooldown=11;audio.boost();navigator.vibrate?.(45)}
 function bindHold(el,key){const on=e=>{e.preventDefault();control[key]=true;el.classList.add("active");audio.init()},off=e=>{e.preventDefault();control[key]=false;el.classList.remove("active")};el.addEventListener("pointerdown",on);el.addEventListener("pointerup",off);el.addEventListener("pointercancel",off);el.addEventListener("pointerleave",off)}
 bindHold(ui.left,"left");bindHold(ui.right,"right");ui.boost.addEventListener("pointerdown",e=>{e.preventDefault();useBoost()});ui.start.addEventListener("click",startGame);
+ui.soundToggle.addEventListener("pointerdown",e=>{e.preventDefault();audio.enable();ui.soundToggle.textContent="🔊 SOUND ON"});
 addEventListener("keydown",e=>{if(["ArrowLeft","a","A"].includes(e.key))control.left=true;if(["ArrowRight","d","D"].includes(e.key))control.right=true;if(e.code==="Space"){e.preventDefault();useBoost()}});addEventListener("keyup",e=>{if(["ArrowLeft","a","A"].includes(e.key))control.left=false;if(["ArrowRight","d","D"].includes(e.key))control.right=false});
 addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight,false)});
 document.addEventListener("visibilitychange",()=>{if(document.hidden){control.left=control.right=false;last=performance.now()}});

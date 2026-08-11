@@ -8,7 +8,7 @@ test("GitHub Pages entry contains the complete mobile game UI", async () => {
   const html = await readFile(new URL("index.html", root), "utf8");
   assert.match(html, /MINI Racer/);
   assert.match(html, /viewport-fit=cover/);
-  for (const id of ["game", "left", "right", "boost", "energy", "distance", "speed", "start"]) {
+  for (const id of ["game", "left", "right", "boost", "soundToggle", "energy", "distance", "speed", "start"]) {
     assert.match(html, new RegExp(`id=["']${id}["']`));
   }
   assert.match(html, /public\/game\.css/);
@@ -19,12 +19,16 @@ test("game rules include five-second boost and ten-hit energy", async () => {
   const js = await readFile(new URL("public/game.js", root), "utf8");
   assert.match(js, /boostTimer=5/);
   assert.match(js, /energy=Math\.max\(0,energy-10\)/);
-  assert.match(js, /baseSpeed=Math\.min\(560,245\+elapsed\*3\.1\)/);
+  assert.match(js, /baseSpeed=Math\.min\(720,370\+elapsed\*4\.2\)/);
+  assert.match(js, /g\.scale\.setScalar\(\.58\)/);
+  assert.match(js, /const laneX=\[-5\.6,-2\.8,0,2\.8,5\.6\]/);
   assert.match(js, /PerspectiveCamera/);
   assert.match(js, /WebGLRenderer/);
   assert.match(js, /CylinderGeometry/);
-  assert.match(js, /spawnObstacle\(\)/);
+  assert.match(js, /function spawn\(\)/);
   assert.match(js, /AudioContext/);
+  assert.match(js, /startRace\(\)/);
+  assert.doesNotMatch(js, /labelTexture|fromCharCode/);
 });
 
 test("hosted app points at the standalone game", async () => {
