@@ -8,7 +8,7 @@ test("GitHub Pages entry contains the complete mobile game UI", async () => {
   const html = await readFile(new URL("index.html", root), "utf8");
   assert.match(html, /MINI Racer/);
   assert.match(html, /viewport-fit=cover/);
-  for (const id of ["game", "left", "right", "boost", "soundToggle", "energy", "distance", "speed", "start"]) {
+  for (const id of ["game", "left", "right", "jump", "soundToggle", "energy", "distance", "speed", "start"]) {
     assert.match(html, new RegExp(`id=["']${id}["']`));
   }
   assert.match(html, /public\/game\.css/);
@@ -20,7 +20,7 @@ test("game rules include five-second boost and ten-hit energy", async () => {
   const js = await readFile(new URL("public/game.js", root), "utf8");
   assert.match(js, /boostTimer=5/);
   assert.match(js, /energy=Math\.max\(0,energy-10\)/);
-  assert.match(js, /baseSpeed=Math\.min\(780,410\+elapsed\*4\.6\)/);
+  assert.match(js, /baseSpeed=Math\.min\(980,560\+elapsed\*5\.4\)/);
   assert.match(js, /TorusGeometry\(1\.28,\.3,14,32\)/);
   assert.doesNotMatch(js, /handle\.rotation\.y=Math\.PI\/2/);
   assert.match(js, /g\.scale\.setScalar\(\.58\)/);
@@ -32,8 +32,16 @@ test("game rules include five-second boost and ten-hit energy", async () => {
   assert.match(js, /AudioContext/);
   assert.match(js, /startRace\(\)/);
   assert.doesNotMatch(js, /labelTexture|fromCharCode/);
-  assert.match(js, /rollTarget\.rotation\.x\+=units\/2\.65/);
-  assert.doesNotMatch(js, /type==="ball"\)o\.rotation\.x/);
+  assert.doesNotMatch(js, /rollTarget|type==="ball"\)o\.rotation\.x/);
+  assert.match(js, /spin:type==="ball"\?0/);
+  assert.match(js, /function jumpCar\(\)/);
+  assert.match(js, /function createBoostPickup\(\)/);
+  assert.match(js, /Math\.abs\(lane-chosen\[0\]\)>=3/);
+  assert.match(js, /const room = new THREE\.Group\(\), scenery=\[\]/);
+  assert.match(js, /prop\.position\.z\+=units\*\.62/);
+  assert.match(js, /detail\.position\.z\+=units/);
+  assert.match(js, /await import\("\.\/vendor\/three\.module\.js"\)/);
+  assert.match(js, /cdn\.jsdelivr\.net\/npm\/three@0\.185\.1/);
 });
 
 test("hosted app points at the standalone game", async () => {

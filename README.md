@@ -14,9 +14,12 @@
 
 ## GitHub Pages에 올리기
 
-1. 이 폴더의 파일 전체를 새 GitHub 저장소에 올립니다.
+1. 숨김 폴더인 `.github`와 `public/vendor`를 포함해 이 폴더 전체를 GitHub 저장소에 올립니다.
 2. 저장소의 **Settings → Pages**로 이동합니다.
-3. **Deploy from a branch**를 선택하고, 업로드한 브랜치의 `/ (root)` 폴더를 지정합니다.
-4. 표시되는 웹 주소를 휴대폰에서 열면 바로 게임할 수 있습니다.
+3. **Source**에서 **GitHub Actions**를 선택합니다.
+4. 저장소의 **Actions** 탭에서 `Deploy MINI Racer to GitHub Pages` 작업이 완료될 때까지 기다립니다.
+5. 작업에 표시되는 웹 주소를 휴대폰에서 열면 바로 게임할 수 있습니다.
+
+3D 라이브러리 파일이 업로드에서 빠진 경우에도 CDN에서 자동으로 다시 불러옵니다.
 
 외부 음원이나 3D 모델 없이 실행되며 Three.js 라이브러리도 프로젝트에 포함되어 있습니다. 브라우저 정책상 사운드는 `ENGINE START` 버튼을 누른 뒤 시작됩니다.

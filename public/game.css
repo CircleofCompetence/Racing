@@ -24,9 +24,9 @@ button { font:inherit; }
 .ctrl span { font-size:31px; line-height:1; transform:scaleX(1.25); }
 .ctrl small { font:900 9px/1 system-ui,sans-serif; letter-spacing:.16em; margin-top:-12px; }
 .ctrl:active,.ctrl.active { transform:translateY(3px); border-bottom-width:2px; filter:brightness(1.35); }
-.ctrl.boost { border-color:#ffcf4a; background:linear-gradient(#ff465c,#a90020); clip-path:polygon(14% 0,86% 0,100% 25%,100% 75%,86% 100%,14% 100%,0 75%,0 25%); border-radius:0; }
-.ctrl.boost span { font-size:24px; transform:skew(-8deg); }
-.ctrl.boost.cooling { filter:grayscale(.8) brightness(.65); }
+.ctrl.jump { border-color:#6ee7ff; background:linear-gradient(#27bde4,#075b91); clip-path:polygon(14% 0,86% 0,100% 25%,100% 75%,86% 100%,14% 100%,0 75%,0 25%); border-radius:0; }
+.ctrl.jump span { font-size:24px; transform:skew(-8deg); }
+.ctrl.jump.airborne { filter:brightness(.65); }
 .overlay { position:fixed; z-index:8; inset:0; display:grid; place-items:center; padding:22px; background:linear-gradient(#090c12c2,#090c12ef); transition:opacity .25s; }
 .overlay.hidden { opacity:0; pointer-events:none; }
 .panel { width:min(100%,420px); text-align:center; color:#fff; }
