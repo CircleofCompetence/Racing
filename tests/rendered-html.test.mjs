@@ -20,7 +20,8 @@ test("game rules include five-second boost and ten-hit energy", async () => {
   const js = await readFile(new URL("public/game.js", root), "utf8");
   assert.match(js, /boostTimer=5/);
   assert.match(js, /energy=Math\.max\(0,energy-10\)/);
-  assert.match(js, /baseSpeed=Math\.min\(980,560\+elapsed\*5\.4\)/);
+  assert.match(js, /baseSpeed=Math\.min\(1050,650\+elapsed\*6\)/);
+  assert.match(js, /Math\.min\(300,Math\.round/);
   assert.match(js, /TorusGeometry\(1\.28,\.3,14,32\)/);
   assert.doesNotMatch(js, /handle\.rotation\.y=Math\.PI\/2/);
   assert.match(js, /g\.scale\.setScalar\(\.58\)/);
@@ -33,7 +34,7 @@ test("game rules include five-second boost and ten-hit energy", async () => {
   assert.match(js, /startRace\(\)/);
   assert.doesNotMatch(js, /labelTexture|fromCharCode/);
   assert.doesNotMatch(js, /rollTarget|type==="ball"\)o\.rotation\.x/);
-  assert.match(js, /spin:type==="ball"\?0/);
+  assert.match(js, /hit:false,spin:0/);
   assert.match(js, /function jumpCar\(\)/);
   assert.match(js, /jumpV=6\.1/);
   assert.match(js, /function createBoostPickup\(\)/);
@@ -50,7 +51,14 @@ test("game rules include five-second boost and ten-hit energy", async () => {
   assert.match(js, /type==="train"/);
   assert.match(js, /type==="drum"/);
   assert.match(js, /type==="rings"/);
-  assert.match(js, /SphereGeometry\(\.3,14,10\)/);
+  assert.match(js, /SphereGeometry\(\.36,16,12\)/);
+  assert.match(js, /type==="bunny"/);
+  assert.match(js, /type==="dino"/);
+  assert.match(js, /type==="toycar"/);
+  assert.match(js, /new THREE\.ConeGeometry\(\.42,1\.28,12\)/);
+  assert.match(js, /elapsed-lastPickupAt>4\.2/);
+  assert.match(js, /snare\(t\)/);
+  assert.match(js, /o\.frequency\.exponentialRampToValueAtTime\(620/);
   assert.match(js, /function makeCockpit\(\)/);
   assert.match(js, /function toggleView\(\)/);
   assert.match(js, /cockpitView\?\(boostTimer>0\?83:73\)/);
