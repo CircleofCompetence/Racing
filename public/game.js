@@ -160,18 +160,6 @@ function createObstacle(type){
     const pole=matte(0xf3b62d,.44), base= cylinder(2.7,2.9,.55,matte(0x38aee0,.46),26);base.position.y=.28;g.add(shadow(base));const post=cylinder(.22,.3,5.7,pole,14);post.position.y=3.1;g.add(shadow(post));const ringColors=[0xf13b50,0xff9138,0xffd447,0x56cf79,0x4c9ef2];ringColors.forEach((ringColor,i)=>{const ring=new THREE.Mesh(new THREE.TorusGeometry(2.1-i*.3,.3,12,28),matte(ringColor,.4));ring.rotation.x=Math.PI/2;ring.position.y=.85+i*.78;g.add(shadow(ring));});const top=new THREE.Mesh(new THREE.SphereGeometry(.48,14,10),pole);top.position.y=6.05;g.add(shadow(top));radius=2.15;
   } else if(type==="bunny"){
     const fur=matte(0xf2eee8,.88), pink=matte(0xff9fba,.78), dark=matte(0x211b22,.65);const body=new THREE.Mesh(new THREE.SphereGeometry(2.05,22,16),fur);body.scale.set(.9,1.18,.82);body.position.y=2.35;g.add(shadow(body));const head=new THREE.Mesh(new THREE.SphereGeometry(1.65,22,16),fur);head.position.set(0,5.05,.15);g.add(shadow(head));for(const x of[-.7,.7]){const ear=new THREE.Mesh(new THREE.SphereGeometry(.62,18,12),fur);ear.scale.set(.7,2.05,.62);ear.position.set(x,7.15,0);ear.rotation.z=x*.12;g.add(shadow(ear));const inner=new THREE.Mesh(new THREE.SphereGeometry(.36,14,10),pink);inner.scale.set(.55,1.9,.36);inner.position.set(x,7.17,.53);inner.rotation.z=x*.12;g.add(inner);const eye=new THREE.Mesh(new THREE.SphereGeometry(.18,12,8),dark);eye.position.set(x*.72,5.35,1.67);g.add(eye)}const nose=new THREE.Mesh(new THREE.SphereGeometry(.2,12,8),pink);nose.position.set(0,4.92,1.82);g.add(nose);radius=1.9;
-  } else if(type==="trex"){
-    const skin=matte(0xa75a2d,.7), belly=matte(0xd28a4c,.75), dark=matte(0x21130d,.5), toothMat=matte(0xfff3cf,.78);
-    const torso=new THREE.Mesh(new THREE.SphereGeometry(2.2,22,16),skin);torso.scale.set(1.28,1,.78);torso.position.set(-.35,2.55,0);g.add(shadow(torso));
-    const neck=new THREE.Mesh(new THREE.SphereGeometry(1.25,18,13),skin);neck.scale.set(.9,1.25,.75);neck.position.set(1.15,3.75,0);neck.rotation.z=-.38;g.add(shadow(neck));
-    const head=new THREE.Mesh(new THREE.SphereGeometry(1.3,20,14),skin);head.scale.set(1.3,.9,.78);head.position.set(2.2,4.65,0);g.add(shadow(head));
-    const upperJaw=box(2.15,.68,1.45,skin);upperJaw.position.set(3.05,4.38,.05);g.add(shadow(upperJaw));
-    const lowerJaw=box(1.95,.38,1.3,belly);lowerJaw.position.set(3.02,3.86,.08);lowerJaw.rotation.z=-.08;g.add(shadow(lowerJaw));
-    for(const x of[2.3,2.7,3.1,3.5]){const topTooth=new THREE.Mesh(new THREE.ConeGeometry(.1,.34,8),toothMat);topTooth.rotation.z=Math.PI;topTooth.position.set(x,3.98,.77);g.add(topTooth);const bottomTooth=new THREE.Mesh(new THREE.ConeGeometry(.08,.27,8),toothMat);bottomTooth.position.set(x+.16,4.08,.77);g.add(bottomTooth)}
-    const eyeWhite=new THREE.Mesh(new THREE.SphereGeometry(.22,12,9),toothMat);eyeWhite.position.set(2.25,4.92,1.04);g.add(eyeWhite);const eye=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),dark);eye.position.set(2.3,4.93,1.22);g.add(eye);
-    for(const x of[-1.25,.65]){const thigh=new THREE.Mesh(new THREE.SphereGeometry(.78,16,12),skin);thigh.scale.set(.8,1.35,.8);thigh.position.set(x,1.2,.62);g.add(shadow(thigh));const shin=cylinder(.34,.52,1.45,skin,14);shin.position.set(x,.55,.62);shin.rotation.z=x<0?.18:-.18;g.add(shadow(shin));const foot=box(1.15,.3,.72,belly);foot.position.set(x+.32,.16,1.0);g.add(shadow(foot));}
-    for(const x of[1.05,1.55]){const arm=cylinder(.12,.18,.86,belly,10);arm.rotation.z=-.78;arm.position.set(x,3.35,.85);g.add(shadow(arm));}
-    const tail=new THREE.Mesh(new THREE.ConeGeometry(.82,5.8,18),skin);tail.rotation.z=Math.PI/2;tail.position.set(-4.05,2.62,0);g.add(shadow(tail));radius=2.7;
   } else if(type==="toycar"){
     const toy=matte(color,.3,.35), dark=matte(0x171c24,.32,.55), glass=matte(0x72d8f5,.18,.4);const base=box(5.6,1.05,3.25,toy);base.position.y=1.05;g.add(shadow(base));const hood=box(4.9,.72,1.25,toy);hood.position.set(0,1.75,1.05);g.add(shadow(hood));const cabin=box(3.25,1.65,1.65,glass);cabin.position.set(0,2.45,-.45);g.add(shadow(cabin));for(const x of[-2.65,2.65])for(const z of[-1.05,1.05]){const wheel=cylinder(.68,.68,.34,dark,18);wheel.rotation.z=Math.PI/2;wheel.position.set(x,.72,z);g.add(shadow(wheel));}for(const x of[-1.65,1.65]){const lamp=new THREE.Mesh(new THREE.SphereGeometry(.25,12,8),new THREE.MeshBasicMaterial({color:0xfff4a8}));lamp.position.set(x,1.55,1.69);g.add(lamp)}radius=2.35;
   } else {
@@ -179,7 +167,7 @@ function createObstacle(type){
   }
   const visual=new THREE.Group();while(g.children.length)visual.add(g.children[0]);
   visual.traverse(node=>{if(node.isMesh)node.castShadow=false});
-  const characterTypes=["duck","robot","teddy","bunny","trex"],isCharacter=characterTypes.includes(type);let poseY=0;
+  const characterTypes=["duck","robot","teddy","bunny"],isCharacter=characterTypes.includes(type);let poseY=0;
   if(isCharacter){
     visual.rotation.y=(Math.random()-.5)*1.5;const poseRoll=Math.random();
     if(poseRoll<.12)visual.rotation.x=-Math.PI/2;
@@ -200,9 +188,9 @@ function createBoostPickup(){
   const glow=new THREE.PointLight(0xffc328,2.2,8);glow.position.z=1;g.add(glow);g.position.y=2.05;g.userData={phase:Math.random()*Math.PI*2,baseY:2.05};return g;
 }
 
-const obstacleKinds=["block","block","block","ball","cup","book","pencil","duck","robot","train","drum","rings","teddy","bunny","trex","toycar"], obstacles=[], pickups=[];
+const obstacleKinds=["block","block","ball","cup","book","pencil","duck","duck","robot","robot","train","drum","rings","teddy","teddy","bunny","bunny","toycar","toycar"], obstacles=[], pickups=[];
 const laneX=[-5.6,-2.8,0,2.8,5.6];
-let cockpitView=false,safeLane=2,running=false,elapsed=0,distance=0,energy=100,speed=0,baseSpeed=650,spawnClock=0,boostTimer=0,jumpY=0,jumpV=0,lastPickupAt=-20,invincible=0,shake=0,last=performance.now();
+let cockpitView=false,safeLane=2,running=false,elapsed=0,distance=0,energy=100,speed=0,baseSpeed=700,spawnClock=0,boostTimer=0,jumpY=0,jumpV=0,lastPickupAt=-20,invincible=0,shake=0,last=performance.now();
 const control={left:false,right:false}, carMotion={x:0,vx:0};
 
 class AudioSystem{
@@ -239,23 +227,23 @@ const audio=new AudioSystem();
 function spawn(){
   if(Math.random()<.58){const step=Math.random()<.5?-1:1;safeLane=THREE.MathUtils.clamp(safeLane+step,0,4)}
   const candidates=[0,1,2,3,4].filter(i=>Math.abs(i-safeLane)>1).sort(()=>Math.random()-.5);
-  const count=elapsed>25&&candidates.length>1&&Math.random()<Math.min(.64,.28+elapsed*.004)?2:1;
+  const count=candidates.length>1&&Math.random()<Math.min(.88,.7+elapsed*.004)?2:1;
   const chosen=[candidates[0]];if(count===2){const second=candidates.find(lane=>Math.abs(lane-chosen[0])>=3);if(second!==undefined)chosen.push(second)}
   for(const lane of chosen){const o=createObstacle(obstacleKinds[Math.floor(Math.random()*obstacleKinds.length)]);o.position.set(laneX[lane],0,-102);scene.add(o);obstacles.push(o);}
   if(elapsed-lastPickupAt>4.2&&pickups.length===0&&Math.random()<.55){const p=createBoostPickup();p.position.x=laneX[safeLane];p.position.z=-98;scene.add(p);pickups.push(p);lastPickupAt=elapsed}
 }
 function hit(o){if(o.userData.hit||invincible>0)return;if(o.userData.jumpable&&jumpY>o.userData.clearance)return;const dz=Math.abs(o.position.z-car.position.z);if(dz<1.85&&Math.abs(o.position.x-car.position.x)<o.userData.radius+.3){const obstaclePush=car.position.x<=o.position.x?1:-1;o.userData.hit=true;o.userData.knockX=obstaclePush*4.8;o.userData.knockY=5.2;o.userData.knockSpin=obstaclePush*2.4;carMotion.vx=-obstaclePush*10.5;carMotion.recoil=1.4;jumpV=Math.max(jumpV,4.8);jumpY=Math.max(jumpY,.05);energy=Math.max(0,energy-10);invincible=1.25;shake=.7;ui.energy.style.width=energy+"%";audio.crash();navigator.vibrate?.([80,35,100]);if(energy<=0)endGame();}}
 function updateWorld(dt){
-  if(!running)return;elapsed+=dt;invincible=Math.max(0,invincible-dt);boostTimer=Math.max(0,boostTimer-dt);baseSpeed=Math.min(1050,650+elapsed*6);speed=baseSpeed+(boostTimer>0?450:0);const units=speed*.08*dt;
+  if(!running)return;elapsed+=dt;invincible=Math.max(0,invincible-dt);boostTimer=Math.max(0,boostTimer-dt);baseSpeed=Math.min(1125,700+elapsed*6.5);speed=baseSpeed+(boostTimer>0?475:0);const units=speed*.08*dt;
   const dir=(control.left?-1:0)+(control.right?1:0);carMotion.vx+=dir*dt*34;carMotion.vx*=Math.pow(.025,dt);carMotion.x=THREE.MathUtils.clamp(carMotion.x+carMotion.vx*dt,-6.25,6.25);car.position.x+=(carMotion.x-car.position.x)*dt*15;carMotion.recoil=(carMotion.recoil||0)*Math.pow(.035,dt);car.position.z=3.2+carMotion.recoil;car.rotation.z+=(dir*-.17-car.rotation.z)*dt*11;
   jumpV-=18*dt;jumpY+=jumpV*dt;if(jumpY<=0){jumpY=0;jumpV=0}car.position.y=jumpY;car.rotation.x+=( (jumpY>0?-jumpV*.018:0)-car.rotation.x)*dt*8;ui.jump.classList.toggle("airborne",jumpY>0);
   floorMat.map.offset.y-=units/11;for(const m of laneMarkers){m.position.z+=units;if(m.position.z>14)m.position.z-=130;}
   for(const detail of floorDetails){detail.position.z+=units;if(detail.position.z>25)detail.position.z-=176;}
   for(const prop of scenery){prop.position.z+=units*.62;if(prop.position.z>34)prop.position.z-=190;}
-  spawnClock-=dt;if(spawnClock<=0){spawn();spawnClock=Math.max(.6,.88-elapsed*.0022)*(.94+Math.random()*.14);}
+  spawnClock-=dt;if(spawnClock<=0){spawn();spawnClock=Math.max(.46,.62-elapsed*.0015)*(.94+Math.random()*.14);}
   for(let i=obstacles.length-1;i>=0;i--){const o=obstacles[i],data=o.userData;o.position.z+=units;o.rotation.y+=data.spin*dt;if(data.hit){o.position.x+=data.knockX*dt;data.knockX*=Math.pow(.08,dt);data.knockY-=14*dt;data.visualY+=data.knockY*dt;if(data.visualY<=data.poseY){data.visualY=data.poseY;data.knockY=Math.abs(data.knockY)>.9?Math.abs(data.knockY)*.28:0}data.visual.position.y=data.visualY;data.visual.rotation.z+=data.knockSpin*dt;data.knockSpin*=Math.pow(.12,dt);const lift=data.visualY-data.poseY;data.blob.material.opacity=.3/(1+lift*.8);data.blob.scale.setScalar(1+lift*.08);data.blob.scale.y=.58*(1+lift*.08)}hit(o);if(o.position.z>15){scene.remove(o);o.traverse(n=>{n.geometry?.dispose();if(n.material?.map)n.material.map.dispose();n.material?.dispose()});obstacles.splice(i,1);}}
   for(let i=pickups.length-1;i>=0;i--){const p=pickups[i];p.position.z+=units;p.rotation.y+=dt*2.6;p.position.y=p.userData.baseY+Math.sin(elapsed*4+p.userData.phase)*.24;if(Math.abs(p.position.z-car.position.z)<2&&Math.abs(p.position.x-car.position.x)<1.05){boostTimer=5;audio.boost();navigator.vibrate?.([35,25,70]);scene.remove(p);pickups.splice(i,1);continue}if(p.position.z>15){scene.remove(p);pickups.splice(i,1)}}
-  const displayKmh=Math.min(300,Math.round(150+Math.max(0,speed-650)*150/850));distance+=speed*dt/38;ui.distance.textContent=String(Math.floor(distance)).padStart(5,"0");ui.speed.textContent=String(displayKmh).padStart(3,"0");ui.boostState.classList.toggle("show",boostTimer>0);ui.boostState.textContent=boostTimer>0?`BOOST ${Math.ceil(boostTimer)}s`:"BOOST!";
+  const displayKmh=Math.min(300,Math.round(165+Math.max(0,speed-700)*135/900));distance+=speed*dt/38;ui.distance.textContent=String(Math.floor(distance)).padStart(5,"0");ui.speed.textContent=String(displayKmh).padStart(3,"0");ui.boostState.classList.toggle("show",boostTimer>0);ui.boostState.textContent=boostTimer>0?`BOOST ${Math.ceil(boostTimer)}s`:"BOOST!";
   for(const f of car.userData.flames){f.material.opacity=boostTimer>0?.84:0;f.scale.y=.75+Math.random()*.55;}
   car.visible=!cockpitView&&!(invincible>0&&Math.floor(invincible*12)%2===0);const targetFov=cockpitView?(boostTimer>0?86:77):(boostTimer>0?75:64);camera.fov+=(targetFov-camera.fov)*dt*5;camera.updateProjectionMatrix();audio.update();
 }
@@ -268,7 +256,7 @@ function render(){
 function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;updateWorld(dt);render()}
 
 function clearObstacles(){for(const list of[obstacles,pickups])while(list.length){const o=list.pop();scene.remove(o);o.traverse(n=>{n.geometry?.dispose();if(n.material?.map)n.material.map.dispose();n.material?.dispose()})}}
-function startGame(){audio.startRace();running=true;elapsed=distance=0;energy=100;baseSpeed=speed=650;spawnClock=.72;boostTimer=jumpY=jumpV=0;lastPickupAt=-20;invincible=0;safeLane=2;carMotion.x=carMotion.vx=carMotion.recoil=0;car.position.set(0,0,3.2);car.visible=!cockpitView;cockpit.visible=cockpitView;clearObstacles();ui.energy.style.width="100%";ui.finalScore.classList.remove("show");ui.eyebrow.textContent="";ui.title.innerHTML="MINI<em>Racer</em>";ui.tagline.textContent="";ui.start.textContent="ENGINE START";ui.overlay.classList.add("hidden")}
+function startGame(){audio.startRace();running=true;elapsed=distance=0;energy=100;baseSpeed=speed=700;spawnClock=.56;boostTimer=jumpY=jumpV=0;lastPickupAt=-20;invincible=0;safeLane=2;carMotion.x=carMotion.vx=carMotion.recoil=0;car.position.set(0,0,3.2);car.visible=!cockpitView;cockpit.visible=cockpitView;clearObstacles();ui.energy.style.width="100%";ui.finalScore.classList.remove("show");ui.eyebrow.textContent="";ui.title.innerHTML="MINI<em>Racer</em>";ui.tagline.textContent="";ui.start.textContent="ENGINE START";ui.overlay.classList.add("hidden")}
 function endGame(){if(!running)return;running=false;speed=0;audio.over();navigator.vibrate?.([100,50,100,50,180]);ui.finalDistance.textContent=Math.floor(distance)+" m";ui.finalScore.classList.add("show");ui.eyebrow.textContent="ENGINE OVERHEATED";ui.title.innerHTML="RACE<em>OVER</em>";ui.tagline.textContent=distance>1500?"거대한 세상을 아주 멀리 달렸어요!":"다시 도전할까요?";ui.start.textContent="RESTART RACE";setTimeout(()=>ui.overlay.classList.remove("hidden"),550)}
 function jumpCar(){if(!running||jumpY>0)return;jumpV=6.1;audio.jump();navigator.vibrate?.(25)}
 function toggleView(){cockpitView=!cockpitView;cockpit.visible=cockpitView;car.visible=!cockpitView;ui.viewToggle.textContent=cockpitView?"👁 운전석":"🚗 외부 시점";ui.viewToggle.setAttribute("aria-pressed",String(cockpitView))}
