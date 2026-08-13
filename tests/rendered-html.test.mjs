@@ -19,7 +19,7 @@ test("GitHub Pages entry contains the complete mobile game UI", async () => {
 test("game rules include Jet flight, falling fruit, and impact damage", async () => {
   const js = await readFile(new URL("public/game.js", root), "utf8");
   assert.match(js, /jetTimer=7/);
-  assert.match(js, /flightY=flightAltitudeStep\(flightY,jetTimer>0,dt\)/);
+  assert.match(js, /flightMotionStep\(flightY,flightV,jetTimer>0,dt\)/);
   assert.match(js, /groundObstacleCanDamage/);
   assert.match(js, /energy=Math\.max\(0,energy-10\)/);
   assert.match(js, /baseSpeed=Math\.min\(1125,700\+elapsed\*6\.5\)/);
@@ -40,6 +40,8 @@ test("game rules include Jet flight, falling fruit, and impact damage", async ()
   assert.match(js, /function jumpCar\(\)/);
   assert.match(js, /jumpV=6\.1/);
   assert.match(js, /function createJetPickup\(\)/);
+  assert.match(js, /strokeText\("JET",256,132\)/);
+  assert.match(js, /function createBoostPickup\(\)/);
   assert.match(js, /function createFruitObstacle\(\)/);
   assert.match(js, /\["apple","orange","watermelon","banana"\]/);
   assert.match(js, /function spawnFruit\(\)/);
@@ -63,7 +65,7 @@ test("game rules include Jet flight, falling fruit, and impact damage", async ()
   assert.doesNotMatch(js, /type==="dino"|"dino"|type==="trex"|"trex"/);
   assert.match(js, /type==="toycar"/);
   assert.match(js, /new THREE\.ConeGeometry\(\.42,1\.28,12\)/);
-  assert.match(js, /elapsed-lastPickupAt>5\.5/);
+  assert.match(js, /elapsed-lastPickupAt>4\.4/);
   assert.match(js, /snare\(t\)/);
   assert.match(js, /o\.frequency\.exponentialRampToValueAtTime\(620/);
   assert.match(js, /function makeCockpit\(\)/);

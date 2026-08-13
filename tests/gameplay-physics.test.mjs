@@ -3,19 +3,37 @@ import test from "node:test";
 import {
   JET_ALTITUDE,
   fallingFruitSpawnY,
-  flightAltitudeStep,
+  flightMotionStep,
   fruitHitsCar,
   groundObstacleCanDamage,
   impactDirections,
 } from "../public/game-physics.js";
 
 test("Jet rises smoothly to flight altitude and lands smoothly", () => {
-  let altitude = 0;
-  for (let frame = 0; frame < 240; frame++) altitude = flightAltitudeStep(altitude, true, 1 / 60);
+  let altitude = 0, velocity = 0;
+  for (let frame = 0; frame < 240; frame++) ({ altitude, velocity } = flightMotionStep(altitude, velocity, true, 1 / 60));
   assert.ok(altitude > JET_ALTITUDE - .01 && altitude <= JET_ALTITUDE);
 
-  for (let frame = 0; frame < 120; frame++) altitude = flightAltitudeStep(altitude, false, 1 / 60);
-  assert.ok(altitude < .02);
+  let previousAltitude = altitude;
+  for (let frame = 0; frame < 180; frame++) {
+    ({ altitude, velocity } = flightMotionStep(altitude, velocity, false, 1 / 60));
+    assert.ok(altitude <= previousAltitude + 1e-9);
+    previousAltitude = altitude;
+  }
+  assert.equal(altitude, 0);
+  assert.equal(velocity, 0);
+});
+
+test("boost and Jet durations remain independent game rules", async () => {
+  const source = await (await import("node:fs/promises")).readFile(new URL("../public/game.js", import.meta.url), "utf8");
+  assert.match(source, /boostTimer=5/);
+  assert.match(source, /jetTimer=7/);
+  assert.match(source, /speed=baseSpeed\+\(boostTimer>0\?475:0\)\+\(jetTimer>0\?360:0\)/);
+  assert.match(source, /function createBoostPickup\(\)/);
+  assert.match(source, /strokeText\("JET",256,132\)/);
+  assert.match(source, /vy:-4\.5-Math\.random\(\)\*2/);
+  assert.match(source, /gravity:15\+Math\.random\(\)\*3\.5/);
+  assert.match(source, /spawnZ=-68-Math\.random\(\)\*12/);
 });
 
 test("ground obstacles cannot damage a flying Jet but retain jump rules on the ground", () => {
@@ -27,7 +45,7 @@ test("ground obstacles cannot damage a flying Jet but retain jump rules on the g
 });
 
 test("falling fruit can be timed for both ground and Jet-height threats", () => {
-  const velocity = -1.8, gravity = 9.1, travelTime = 1.55;
+  const velocity = -5.2, gravity = 16.5, travelTime = 1.2;
   for (const targetY of [1.3, JET_ALTITUDE]) {
     const spawnY = fallingFruitSpawnY(targetY, velocity, gravity, travelTime);
     const arrivalY = spawnY + velocity * travelTime - .5 * gravity * travelTime * travelTime;

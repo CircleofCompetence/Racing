@@ -1,4 +1,4 @@
-import { fallingFruitSpawnY, flightAltitudeStep, fruitHitsCar, groundObstacleCanDamage, impactDirections } from "./game-physics.js";
+import { fallingFruitSpawnY, flightMotionStep, fruitHitsCar, groundObstacleCanDamage, impactDirections } from "./game-physics.js";
 
 let THREE;
 try {
@@ -189,14 +189,17 @@ function createObstacle(type){
 }
 
 function createJetPickup(){
-  const g=new THREE.Group(), jetMat=new THREE.MeshStandardMaterial({color:0xffd52c,emissive:0xff7a00,emissiveIntensity:1.15,roughness:.24,metalness:.5}), dark=matte(0x24506a,.22,.65);
-  const body=cylinder(.27,.38,2.8,jetMat,16);body.rotation.x=Math.PI/2;g.add(shadow(body));
-  const nose=new THREE.Mesh(new THREE.ConeGeometry(.28,.75,16),jetMat);nose.rotation.x=-Math.PI/2;nose.position.z=-1.75;g.add(shadow(nose));
-  const wings=box(2.45,.12,.9,jetMat);wings.position.z=.05;g.add(shadow(wings));
-  for(const x of[-.55,.55]){const engine=cylinder(.16,.2,.78,dark,12);engine.rotation.x=Math.PI/2;engine.position.set(x,-.12,.28);g.add(shadow(engine))}
-  const tail=box(1.1,.1,.55,dark);tail.position.z=1.12;g.add(shadow(tail));
-  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.65,.1,10,36),new THREE.MeshBasicMaterial({color:0x66eaff,transparent:true,opacity:.9}));ring.position.z=.1;g.add(ring);
-  const glow=new THREE.PointLight(0x52dcff,2.4,9);glow.position.z=1;g.add(glow);g.position.y=2.25;g.userData={phase:Math.random()*Math.PI*2,baseY:2.25};return g;
+  const g=new THREE.Group(), c=document.createElement("canvas");c.width=512;c.height=256;const x=c.getContext("2d");
+  x.clearRect(0,0,c.width,c.height);x.shadowColor="#ff1838";x.shadowBlur=30;x.fillStyle="#d90c2f";x.strokeStyle="#fff";x.lineWidth=14;x.textAlign="center";x.textBaseline="middle";x.font="italic 900 150px Impact, Arial Black, sans-serif";x.strokeText("JET",256,132);x.fillText("JET",256,132);
+  const texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;const mark=new THREE.Mesh(new THREE.PlaneGeometry(4.7,2.35),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,side:THREE.DoubleSide}));mark.rotation.x=-.08;g.add(mark);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.75,.11,10,36),new THREE.MeshBasicMaterial({color:0xff3150,transparent:true,opacity:.92}));g.add(ring);
+  const glow=new THREE.PointLight(0xff2548,2.8,10);glow.position.z=1;g.add(glow);g.position.y=2.35;g.userData={kind:"jet",phase:Math.random()*Math.PI*2,baseY:2.35};return g;
+}
+
+function createBoostPickup(){
+  const g=new THREE.Group(), shape=new THREE.Shape();shape.moveTo(.18,1.55);shape.lineTo(-.72,.2);shape.lineTo(-.12,.2);shape.lineTo(-.48,-1.5);shape.lineTo(.78,.05);shape.lineTo(.18,.05);shape.closePath();
+  const bolt=new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:.24,bevelEnabled:true,bevelSegments:2,bevelSize:.07,bevelThickness:.06}),new THREE.MeshStandardMaterial({color:0xffdf35,emissive:0xff8a00,emissiveIntensity:2.4,roughness:.25,metalness:.25}));bolt.position.z=-.12;g.add(shadow(bolt));
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.55,.09,10,36),new THREE.MeshBasicMaterial({color:0x66eaff,transparent:true,opacity:.85}));g.add(ring);const glow=new THREE.PointLight(0xffc328,2.2,8);glow.position.z=1;g.add(glow);g.position.y=2.05;g.userData={kind:"boost",phase:Math.random()*Math.PI*2,baseY:2.05};return g;
 }
 
 function createFruitObstacle(){
@@ -215,12 +218,12 @@ function createFruitObstacle(){
     const fruit=new THREE.Mesh(new THREE.TorusGeometry(1.15,.38,14,28,Math.PI*1.35),matte(0xffd52c,.62));fruit.rotation.z=-.68;fruit.position.set(-.15,.15,0);g.add(shadow(fruit));
     for(const x of[-1.05,.9]){const tip=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),matte(0x70501e,.72));tip.position.set(x,x<0?.77:-.42,0);g.add(shadow(tip))}radius=1.35;
   }
-  g.userData={type,radius,vy:-1-Math.random()*1.5,vx:0,gravity:8+Math.random()*2.2,spinX:(Math.random()-.5)*3.4,spinZ:(Math.random()-.5)*3.4,hit:false,grounded:false};return g;
+  g.userData={type,radius,vy:-4.5-Math.random()*2,vx:0,gravity:15+Math.random()*3.5,spinX:(Math.random()-.5)*4.6,spinZ:(Math.random()-.5)*4.6,hit:false,grounded:false};return g;
 }
 
 const obstacleKinds=["block","block","ball","cup","book","pencil","duck","duck","robot","robot","train","drum","rings","teddy","teddy","bunny","bunny","toycar","toycar"], obstacles=[], pickups=[], fruits=[];
 const laneX=[-5.6,-2.8,0,2.8,5.6];
-let cockpitView=false,safeLane=2,running=false,elapsed=0,distance=0,energy=100,speed=0,baseSpeed=700,spawnClock=0,fruitClock=2.2,jetTimer=0,flightY=0,jumpY=0,jumpV=0,lastPickupAt=-20,invincible=0,shake=0,last=performance.now();
+let cockpitView=false,safeLane=2,running=false,elapsed=0,distance=0,energy=100,speed=0,baseSpeed=700,spawnClock=0,fruitClock=2.2,boostTimer=0,jetTimer=0,flightY=0,flightV=0,jumpY=0,jumpV=0,lastPickupAt=-20,invincible=0,shake=0,last=performance.now();
 const control={left:false,right:false}, carMotion={x:0,vx:0,recoil:0,impactY:0,impactV:0,impactRoll:0,impactPitch:0};
 
 class AudioSystem{
@@ -250,7 +253,7 @@ class AudioSystem{
   boost(){if(!this.init())return;this.ctx.resume?.();const t=this.ctx.currentTime;[180,270,405,610,820].forEach((f,i)=>this.tone(f,t+i*.045,.28,.18,"sawtooth",this.engineGain));this.noise(.55,.18,1900)}
   crash(){if(!this.init())return;this.ctx.resume?.();this.noise(.42,.42,650);const t=this.ctx.currentTime;this.tone(82,t,.48,.38,"sawtooth",this.engineGain);this.tone(47,t,.55,.28,"square",this.engineGain)}
   over(){if(!this.init())return;const t=this.ctx.currentTime;[392,294,220,147,82].forEach((f,i)=>this.tone(f,t+i*.16,.4,.18,"sawtooth"))}
-  update(){if(!this.ctx)return;if(this.ctx.state==="suspended")return;const r=speed/1200;this.engine.frequency.setTargetAtTime(78+r*220+(jetTimer>0?62:0),this.ctx.currentTime,.04);this.engine2.frequency.setTargetAtTime(78+r*220,this.ctx.currentTime,.05);this.filter.frequency.setTargetAtTime(460+r*1900,this.ctx.currentTime,.05);this.engineGain.gain.setTargetAtTime(running?.11+(jetTimer>0?.06:0):.001,this.ctx.currentTime,.08);const chords=[[220,261.63,329.63],[174.61,220,261.63],[261.63,329.63,392],[196,246.94,293.66]],bassRoots=[55,43.65,65.41,49],lead=[440,523.25,659.25,783.99,659.25,523.25,880,783.99,659.25,587.33,523.25,659.25,987.77,880,783.99,659.25];while(running&&this.next<this.ctx.currentTime+.14){const step=this.beat%16,bar=Math.floor(this.beat/16)%4,t=this.next;if(step===0)this.chord(chords[bar],t,1.15);if(step%4===0)this.kick(t);if(step===4||step===12)this.snare(t);this.hat(t,step===15);if(step%2===0)this.tone(bassRoots[bar]*(step===6||step===14?2:1),t,.11,.12,"sawtooth",this.music);if([1,3,5,7,9,11,13,15].includes(step))this.tone(lead[(step+bar*3)%16],t,.09,jetTimer>0?.075:.055,"square",this.music);this.next+=jetTimer>0?.075:.095;this.beat++}}
+  update(){if(!this.ctx)return;if(this.ctx.state==="suspended")return;const powered=boostTimer>0||jetTimer>0,r=speed/1200;this.engine.frequency.setTargetAtTime(78+r*220+(powered?62:0),this.ctx.currentTime,.04);this.engine2.frequency.setTargetAtTime(78+r*220,this.ctx.currentTime,.05);this.filter.frequency.setTargetAtTime(460+r*1900,this.ctx.currentTime,.05);this.engineGain.gain.setTargetAtTime(running?.11+(powered?.06:0):.001,this.ctx.currentTime,.08);const chords=[[220,261.63,329.63],[174.61,220,261.63],[261.63,329.63,392],[196,246.94,293.66]],bassRoots=[55,43.65,65.41,49],lead=[440,523.25,659.25,783.99,659.25,523.25,880,783.99,659.25,587.33,523.25,659.25,987.77,880,783.99,659.25];while(running&&this.next<this.ctx.currentTime+.14){const step=this.beat%16,bar=Math.floor(this.beat/16)%4,t=this.next;if(step===0)this.chord(chords[bar],t,1.15);if(step%4===0)this.kick(t);if(step===4||step===12)this.snare(t);this.hat(t,step===15);if(step%2===0)this.tone(bassRoots[bar]*(step===6||step===14?2:1),t,.11,.12,"sawtooth",this.music);if([1,3,5,7,9,11,13,15].includes(step))this.tone(lead[(step+bar*3)%16],t,.09,powered?.075:.055,"square",this.music);this.next+=powered?.075:.095;this.beat++}}
 }
 const audio=new AudioSystem();
 
@@ -260,10 +263,10 @@ function spawn(){
   const count=candidates.length>1&&Math.random()<Math.min(.88,.7+elapsed*.004)?2:1;
   const chosen=[candidates[0]];if(count===2){const second=candidates.find(lane=>Math.abs(lane-chosen[0])>=3);if(second!==undefined)chosen.push(second)}
   for(const lane of chosen){const o=createObstacle(obstacleKinds[Math.floor(Math.random()*obstacleKinds.length)]);o.position.set(laneX[lane],0,-102);scene.add(o);obstacles.push(o);}
-  if(elapsed-lastPickupAt>5.5&&pickups.length===0&&jetTimer<=0&&Math.random()<.48){const p=createJetPickup();p.position.x=laneX[safeLane];p.position.z=-98;scene.add(p);pickups.push(p);lastPickupAt=elapsed}
+  if(elapsed-lastPickupAt>4.4&&pickups.length===0&&Math.random()<.52){const wantsJet=Math.random()<.42&&jetTimer<=0, p=wantsJet?createJetPickup():createBoostPickup();p.position.x=laneX[safeLane];p.position.z=-98;scene.add(p);pickups.push(p);lastPickupAt=elapsed}
 }
 function spawnFruit(){
-  const f=createFruitObstacle(), lane=Math.floor(Math.random()*laneX.length), spawnZ=-88-Math.random()*14, travelTime=(car.position.z-spawnZ)/(Math.max(700,speed)*.08), targetY=Math.random()<.62?f.userData.radius:5.5+Math.random()*1.8;
+  const f=createFruitObstacle(), lane=Math.floor(Math.random()*laneX.length), spawnZ=-68-Math.random()*12, travelTime=(car.position.z-spawnZ)/(Math.max(700,speed)*.08), targetY=Math.random()<.62?f.userData.radius:5.5+Math.random()*1.8;
   f.position.set(laneX[lane]+(Math.random()-.5)*.45,fallingFruitSpawnY(targetY,f.userData.vy,f.userData.gravity,travelTime),spawnZ);scene.add(f);fruits.push(f);
 }
 function applyDamage(source){
@@ -283,10 +286,10 @@ function hitFruit(f){
   if(fruitHitsCar({x:f.position.x,y:f.position.y,z:f.position.z,radius},{x:car.position.x,y:carCenterY,z:car.position.z}))applyDamage(f);
 }
 function updateWorld(dt){
-  if(!running)return;elapsed+=dt;invincible=Math.max(0,invincible-dt);jetTimer=Math.max(0,jetTimer-dt);baseSpeed=Math.min(1125,700+elapsed*6.5);speed=baseSpeed+(jetTimer>0?360:0);const units=speed*.08*dt;
+  if(!running)return;elapsed+=dt;invincible=Math.max(0,invincible-dt);boostTimer=Math.max(0,boostTimer-dt);jetTimer=Math.max(0,jetTimer-dt);baseSpeed=Math.min(1125,700+elapsed*6.5);speed=baseSpeed+(boostTimer>0?475:0)+(jetTimer>0?360:0);const units=speed*.08*dt;
   const dir=(control.left?-1:0)+(control.right?1:0);carMotion.vx+=dir*dt*34;carMotion.vx*=Math.pow(.025,dt);carMotion.x=THREE.MathUtils.clamp(carMotion.x+carMotion.vx*dt,-6.25,6.25);car.position.x+=(carMotion.x-car.position.x)*dt*15;carMotion.recoil*=Math.pow(.025,dt);car.position.z=3.2+carMotion.recoil;
   if(jetTimer>0){jumpY=jumpV=0} else {jumpV-=18*dt;jumpY+=jumpV*dt;if(jumpY<=0){jumpY=0;jumpV=0}}
-  flightY=flightAltitudeStep(flightY,jetTimer>0,dt);
+  ({altitude:flightY,velocity:flightV}=flightMotionStep(flightY,flightV,jetTimer>0,dt));
   carMotion.impactV-=18*dt;carMotion.impactY+=carMotion.impactV*dt;if(carMotion.impactY<=0){carMotion.impactY=0;carMotion.impactV=0}
   carMotion.impactRoll*=Math.pow(.035,dt);carMotion.impactPitch*=Math.pow(.04,dt);car.position.y=flightY+jumpY+carMotion.impactY;
   car.rotation.z+=(dir*-.17+carMotion.impactRoll-car.rotation.z)*dt*11;car.rotation.x+=((jetTimer>0?-.1:jumpY>0?-jumpV*.018:0)+carMotion.impactPitch-car.rotation.x)*dt*8;ui.jump.classList.toggle("airborne",jumpY>0||flightY>.35);
@@ -297,9 +300,9 @@ function updateWorld(dt){
   fruitClock-=dt;if(elapsed>2.5&&fruitClock<=0){spawnFruit();fruitClock=1.45+Math.random()*1.15;}
   for(let i=obstacles.length-1;i>=0;i--){const o=obstacles[i],data=o.userData;o.position.z+=units;o.rotation.y+=data.spin*dt;if(data.hit){o.position.x+=data.knockX*dt;data.knockX*=Math.pow(.08,dt);data.knockY-=14*dt;data.visualY+=data.knockY*dt;if(data.visualY<=data.poseY){data.visualY=data.poseY;data.knockY=Math.abs(data.knockY)>.9?Math.abs(data.knockY)*.26:0}data.visual.position.y=data.visualY;data.visual.rotation.z+=data.knockSpin*dt;data.knockSpin*=Math.pow(.1,dt);const lift=data.visualY-data.poseY;data.blob.material.opacity=data.blobOpacity/(1+lift*.8);data.blob.scale.x=1+lift*.08;data.blob.scale.y=data.blobScaleY*(1+lift*.08)}hitGroundObstacle(o);if(o.position.z>15){disposeObject(o);obstacles.splice(i,1);}}
   for(let i=fruits.length-1;i>=0;i--){const f=fruits[i],data=f.userData;f.position.z+=units;f.position.x+=data.vx*dt;data.vx*=Math.pow(.16,dt);if(!data.grounded){data.vy-=data.gravity*dt;f.position.y+=data.vy*dt;f.rotation.x+=data.spinX*dt;f.rotation.z+=data.spinZ*dt;if(f.position.y<=data.radius){f.position.y=data.radius;if(Math.abs(data.vy)>2.2){data.vy=-data.vy*.24;data.spinX*=.7;data.spinZ*=.7}else{data.vy=0;data.grounded=true}}}else{data.spinX*=Math.pow(.06,dt);data.spinZ*=Math.pow(.06,dt)}hitFruit(f);if(f.position.z>18||Math.abs(f.position.x)>18){disposeObject(f);fruits.splice(i,1);}}
-  for(let i=pickups.length-1;i>=0;i--){const p=pickups[i];p.position.z+=units;p.rotation.y+=dt*2.6;p.position.y=p.userData.baseY+Math.sin(elapsed*4+p.userData.phase)*.24;if(jetTimer<=0&&flightY<.8&&Math.abs(p.position.z-car.position.z)<2&&Math.abs(p.position.x-car.position.x)<1.05){jetTimer=7;audio.boost();navigator.vibrate?.([35,25,70]);disposeObject(p);pickups.splice(i,1);continue}if(p.position.z>15){disposeObject(p);pickups.splice(i,1)}}
-  const jetActive=jetTimer>0||flightY>.35,displayKmh=Math.min(300,Math.round(165+Math.max(0,speed-700)*135/900));distance+=speed*dt/38;ui.distance.textContent=String(Math.floor(distance)).padStart(5,"0");ui.speed.textContent=String(displayKmh).padStart(3,"0");ui.boostState.classList.toggle("show",jetActive);ui.boostState.textContent=jetTimer>0?`JET FLIGHT ${Math.ceil(jetTimer)}s`:jetActive?"LANDING":"JET READY";
-  for(const f of car.userData.flames){f.material.opacity=jetActive?.9:0;f.scale.y=.9+Math.random()*.7;}for(const part of car.userData.jetParts)part.visible=jetActive;
+  for(let i=pickups.length-1;i>=0;i--){const p=pickups[i];p.position.z+=units;p.rotation.y+=dt*2.6;p.position.y=p.userData.baseY+Math.sin(elapsed*4+p.userData.phase)*.24;if(flightY<.8&&Math.abs(p.position.z-car.position.z)<2&&Math.abs(p.position.x-car.position.x)<1.05){if(p.userData.kind==="jet"){jetTimer=7;boostTimer=0}else boostTimer=5;audio.boost();navigator.vibrate?.([35,25,70]);disposeObject(p);pickups.splice(i,1);continue}if(p.position.z>15){disposeObject(p);pickups.splice(i,1)}}
+  const jetActive=jetTimer>0||flightY>.35,boostActive=boostTimer>0,displayKmh=Math.min(300,Math.round(165+Math.max(0,speed-700)*135/900));distance+=speed*dt/38;ui.distance.textContent=String(Math.floor(distance)).padStart(5,"0");ui.speed.textContent=String(displayKmh).padStart(3,"0");ui.boostState.classList.toggle("show",jetActive||boostActive);ui.boostState.classList.toggle("jet",jetActive);ui.boostState.textContent=jetTimer>0?`JET FLIGHT ${Math.ceil(jetTimer)}s`:jetActive?"SOFT LANDING":boostActive?`BOOST ${Math.ceil(boostTimer)}s`:"READY";
+  for(const f of car.userData.flames){f.material.opacity=jetActive?.92:boostActive?.84:0;f.scale.y=(jetActive?1.05:.75)+Math.random()*.6;}for(const part of car.userData.jetParts)part.visible=jetActive;
   car.visible=!cockpitView&&!(invincible>0&&Math.floor(invincible*12)%2===0);const targetFov=cockpitView?(jetActive?86:77):(jetActive?75:64);camera.fov+=(targetFov-camera.fov)*dt*5;camera.updateProjectionMatrix();audio.update();
 }
 function render(){
@@ -312,7 +315,7 @@ function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;updateWorld(
 
 function disposeObject(o){scene.remove(o);o.traverse(n=>{n.geometry?.dispose();if(n.material?.map)n.material.map.dispose();n.material?.dispose()})}
 function clearObstacles(){for(const list of[obstacles,pickups,fruits])while(list.length)disposeObject(list.pop())}
-function startGame(){audio.startRace();running=true;elapsed=distance=0;energy=100;baseSpeed=speed=700;spawnClock=.56;fruitClock=2.2;jetTimer=flightY=jumpY=jumpV=0;lastPickupAt=-20;invincible=0;safeLane=2;Object.assign(carMotion,{x:0,vx:0,recoil:0,impactY:0,impactV:0,impactRoll:0,impactPitch:0});car.position.set(0,0,3.2);car.rotation.set(0,0,0);car.userData.jetParts.forEach(part=>part.visible=false);car.userData.flames.forEach(flame=>flame.material.opacity=0);car.visible=!cockpitView;cockpit.visible=cockpitView;clearObstacles();ui.energy.style.width="100%";ui.boostState.classList.remove("show");ui.boostState.textContent="JET READY";ui.finalScore.classList.remove("show");ui.eyebrow.textContent="";ui.title.innerHTML="MINI<em>Racer</em>";ui.tagline.textContent="";ui.start.textContent="ENGINE START";ui.overlay.classList.add("hidden")}
+function startGame(){audio.startRace();running=true;elapsed=distance=0;energy=100;baseSpeed=speed=700;spawnClock=.56;fruitClock=2.2;boostTimer=jetTimer=flightY=flightV=jumpY=jumpV=0;lastPickupAt=-20;invincible=0;safeLane=2;Object.assign(carMotion,{x:0,vx:0,recoil:0,impactY:0,impactV:0,impactRoll:0,impactPitch:0});car.position.set(0,0,3.2);car.rotation.set(0,0,0);car.userData.jetParts.forEach(part=>part.visible=false);car.userData.flames.forEach(flame=>flame.material.opacity=0);car.visible=!cockpitView;cockpit.visible=cockpitView;clearObstacles();ui.energy.style.width="100%";ui.boostState.classList.remove("show","jet");ui.boostState.textContent="READY";ui.finalScore.classList.remove("show");ui.eyebrow.textContent="";ui.title.innerHTML="MINI<em>Racer</em>";ui.tagline.textContent="";ui.start.textContent="ENGINE START";ui.overlay.classList.add("hidden")}
 function endGame(){if(!running)return;running=false;speed=0;audio.over();navigator.vibrate?.([100,50,100,50,180]);ui.finalDistance.textContent=Math.floor(distance)+" m";ui.finalScore.classList.add("show");ui.eyebrow.textContent="ENGINE OVERHEATED";ui.title.innerHTML="RACE<em>OVER</em>";ui.tagline.textContent=distance>1500?"거대한 세상을 아주 멀리 달렸어요!":"다시 도전할까요?";ui.start.textContent="RESTART RACE";setTimeout(()=>ui.overlay.classList.remove("hidden"),550)}
 function jumpCar(){if(!running||jumpY>0||jetTimer>0||flightY>.35)return;jumpV=6.1;audio.jump();navigator.vibrate?.(25)}
 function toggleView(){cockpitView=!cockpitView;cockpit.visible=cockpitView;car.visible=!cockpitView;ui.viewToggle.textContent=cockpitView?"👁 운전석":"🚗 외부 시점";ui.viewToggle.setAttribute("aria-pressed",String(cockpitView))}

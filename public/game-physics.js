@@ -1,10 +1,15 @@
 export const JET_ALTITUDE = 6.2;
 export const GROUND_CLEARANCE = .7;
 
-export function flightAltitudeStep(currentAltitude, jetActive, dt) {
+export function flightMotionStep(currentAltitude, currentVelocity, jetActive, dt) {
   const targetAltitude = jetActive ? JET_ALTITUDE : 0;
-  const response = jetActive ? 4.4 : 3.2;
-  return currentAltitude + (targetAltitude - currentAltitude) * (1 - Math.exp(-dt * response));
+  const response = jetActive ? 3.8 : 3.2;
+  const acceleration = (targetAltitude - currentAltitude) * response * response - 2 * response * currentVelocity;
+  let velocity = currentVelocity + acceleration * dt;
+  let altitude = currentAltitude + velocity * dt;
+  if (jetActive && altitude >= JET_ALTITUDE) { altitude = JET_ALTITUDE; velocity = 0; }
+  if (!jetActive && altitude < .025 && Math.abs(velocity) < .35) { altitude = 0; velocity = 0; }
+  return { altitude: Math.max(0, altitude), velocity };
 }
 
 export function groundObstacleCanDamage({ jetTimer, flightY, jumpY, impactY, jumpable, clearance }) {
