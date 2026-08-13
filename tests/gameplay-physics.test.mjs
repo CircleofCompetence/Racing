@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   JET_ALTITUDE,
+  choosePickupKind,
   fallingFruitSpawnY,
   flightMotionStep,
   fruitHitsCar,
@@ -31,17 +32,29 @@ test("boost and Jet durations remain independent game rules", async () => {
   assert.match(source, /speed=baseSpeed\+\(boostTimer>0\?475:0\)\+\(jetTimer>0\?360:0\)/);
   assert.match(source, /function createBoostPickup\(\)/);
   assert.match(source, /strokeText\("JET",256,132\)/);
-  assert.match(source, /vy:-4\.5-Math\.random\(\)\*2/);
-  assert.match(source, /gravity:15\+Math\.random\(\)\*3\.5/);
-  assert.match(source, /spawnZ=-68-Math\.random\(\)\*12/);
+  assert.match(source, /vy:-7-Math\.random\(\)\*3/);
+  assert.match(source, /gravity:22\+Math\.random\(\)\*5/);
+  assert.match(source, /fruitClock=3\.8\+Math\.random\(\)\*2\.8/);
+  assert.match(source, /audio\.jet\(\)/);
+  assert.match(source, /this\.jetNoise\.loop=true/);
 });
 
-test("ground obstacles cannot damage a flying Jet but retain jump rules on the ground", () => {
+test("a flying Jet clears ground props but collides with tall dolls at its altitude", () => {
   const base = { jumpY: 0, impactY: 0, jumpable: false, clearance: 0 };
   assert.equal(groundObstacleCanDamage({ ...base, jetTimer: 4, flightY: 6.2 }), false);
+  assert.equal(groundObstacleCanDamage({ ...base, jetTimer: 4, flightY: 6.2, tallCharacter: true, obstacleMinY: 0, obstacleMaxY: 8.5, carCenterY: 6.54 }), true);
+  assert.equal(groundObstacleCanDamage({ ...base, jetTimer: 4, flightY: 6.2, tallCharacter: true, obstacleMinY: 0, obstacleMaxY: 5.5, carCenterY: 6.54 }), false);
   assert.equal(groundObstacleCanDamage({ ...base, jetTimer: 0, flightY: .71 }), false);
   assert.equal(groundObstacleCanDamage({ ...base, jetTimer: 0, flightY: 0 }), true);
   assert.equal(groundObstacleCanDamage({ ...base, jetTimer: 0, flightY: 0, jumpable: true, jumpY: 1, clearance: .6 }), false);
+});
+
+test("boost and Jet selection stays random without three identical pickups in a row", () => {
+  assert.equal(choosePickupKind(.2, "", 0, false), "jet");
+  assert.equal(choosePickupKind(.8, "", 0, false), "boost");
+  assert.equal(choosePickupKind(.1, "jet", 2, false), "boost");
+  assert.equal(choosePickupKind(.9, "boost", 2, false), "jet");
+  assert.equal(choosePickupKind(.1, "jet", 1, true), "boost");
 });
 
 test("falling fruit can be timed for both ground and Jet-height threats", () => {

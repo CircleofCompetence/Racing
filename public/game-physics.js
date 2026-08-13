@@ -12,9 +12,17 @@ export function flightMotionStep(currentAltitude, currentVelocity, jetActive, dt
   return { altitude: Math.max(0, altitude), velocity };
 }
 
-export function groundObstacleCanDamage({ jetTimer, flightY, jumpY, impactY, jumpable, clearance }) {
-  if (jetTimer > 0 || flightY > GROUND_CLEARANCE) return false;
+export function groundObstacleCanDamage({ jetTimer, flightY, jumpY, impactY, jumpable, clearance, tallCharacter=false, obstacleMinY=0, obstacleMaxY=0, carCenterY=0 }) {
+  if (jetTimer > 0 || flightY > GROUND_CLEARANCE) {
+    return tallCharacter && carCenterY + .5 > obstacleMinY && carCenterY - .5 < obstacleMaxY;
+  }
   return !(jumpable && jumpY + impactY > clearance);
+}
+
+export function choosePickupKind(randomValue, lastKind="", streak=0, jetActive=false) {
+  if (jetActive) return "boost";
+  if (streak >= 2) return lastKind === "jet" ? "boost" : "jet";
+  return randomValue < .48 ? "jet" : "boost";
 }
 
 export function fallingFruitSpawnY(targetY, initialVelocity, gravity, travelTime) {

@@ -1,4 +1,4 @@
-import { fallingFruitSpawnY, flightMotionStep, fruitHitsCar, groundObstacleCanDamage, impactDirections } from "./game-physics.js";
+import { choosePickupKind, fallingFruitSpawnY, flightMotionStep, fruitHitsCar, groundObstacleCanDamage, impactDirections } from "./game-physics.js";
 
 let THREE;
 try {
@@ -183,9 +183,10 @@ function createObstacle(type){
   }
   else if(type!=="ball"){visual.rotation.y=(Math.random()-.5)*(type==="book"||type==="pencil"?1.1:.55);visual.rotation.z=(Math.random()-.5)*.05}
   visual.position.y=poseY;g.add(visual);
+  visual.updateMatrixWorld(true);const obstacleBounds=new THREE.Box3().setFromObject(visual),obstacleMinY=obstacleBounds.min.y,obstacleMaxY=obstacleBounds.max.y,tallCharacter=isCharacter&&obstacleMaxY>=5.8;
   const contactRadius=isCharacter?Math.max(.9,radius*.82):Math.max(1.05,radius*1.15);
   const blob=new THREE.Mesh(new THREE.CircleGeometry(contactRadius,28),new THREE.MeshBasicMaterial({color:0x050505,transparent:true,opacity:isCharacter?.38:.24,depthWrite:false}));blob.rotation.x=-Math.PI/2;blob.scale.y=isCharacter?.42:.58;blob.position.y=.028;blob.renderOrder=-1;g.add(blob);
-  g.userData={type,radius,jumpable,clearance,visual,blob,blobOpacity:blob.material.opacity,blobScaleY:blob.scale.y,poseY,visualY:poseY,knockY:0,knockX:0,knockSpin:0,hit:false,spin:0};return g;
+  g.userData={type,radius,jumpable,clearance,visual,blob,blobOpacity:blob.material.opacity,blobScaleY:blob.scale.y,poseY,visualY:poseY,obstacleMinY,obstacleMaxY,tallCharacter,knockY:0,knockX:0,knockSpin:0,hit:false,spin:0};return g;
 }
 
 function createJetPickup(){
@@ -218,12 +219,12 @@ function createFruitObstacle(){
     const fruit=new THREE.Mesh(new THREE.TorusGeometry(1.15,.38,14,28,Math.PI*1.35),matte(0xffd52c,.62));fruit.rotation.z=-.68;fruit.position.set(-.15,.15,0);g.add(shadow(fruit));
     for(const x of[-1.05,.9]){const tip=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),matte(0x70501e,.72));tip.position.set(x,x<0?.77:-.42,0);g.add(shadow(tip))}radius=1.35;
   }
-  g.userData={type,radius,vy:-4.5-Math.random()*2,vx:0,gravity:15+Math.random()*3.5,spinX:(Math.random()-.5)*4.6,spinZ:(Math.random()-.5)*4.6,hit:false,grounded:false};return g;
+  g.userData={type,radius,vy:-7-Math.random()*3,vx:0,gravity:22+Math.random()*5,spinX:(Math.random()-.5)*5.4,spinZ:(Math.random()-.5)*5.4,hit:false,grounded:false};return g;
 }
 
 const obstacleKinds=["block","block","ball","cup","book","pencil","duck","duck","robot","robot","train","drum","rings","teddy","teddy","bunny","bunny","toycar","toycar"], obstacles=[], pickups=[], fruits=[];
 const laneX=[-5.6,-2.8,0,2.8,5.6];
-let cockpitView=false,safeLane=2,running=false,elapsed=0,distance=0,energy=100,speed=0,baseSpeed=700,spawnClock=0,fruitClock=2.2,boostTimer=0,jetTimer=0,flightY=0,flightV=0,jumpY=0,jumpV=0,lastPickupAt=-20,invincible=0,shake=0,last=performance.now();
+let cockpitView=false,safeLane=2,running=false,elapsed=0,distance=0,energy=100,speed=0,baseSpeed=700,spawnClock=0,fruitClock=4.5,boostTimer=0,jetTimer=0,flightY=0,flightV=0,jumpY=0,jumpV=0,lastPickupAt=-20,lastPickupKind="",pickupKindStreak=0,invincible=0,shake=0,last=performance.now();
 const control={left:false,right:false}, carMotion={x:0,vx:0,recoil:0,impactY:0,impactV:0,impactRoll:0,impactPitch:0};
 
 class AudioSystem{
@@ -238,6 +239,9 @@ class AudioSystem{
     this.filter=this.ctx.createBiquadFilter();this.filter.type="lowpass";this.filter.Q.value=3.5;this.filter.connect(this.engineGain);
     this.engine=this.ctx.createOscillator();this.engine.type="sawtooth";this.engine.connect(this.filter);this.engine.start();
     this.engine2=this.ctx.createOscillator();this.engine2.type="square";this.engine2.detune.value=-1200;const sub=this.ctx.createGain();sub.gain.value=.18;this.engine2.connect(sub);sub.connect(this.filter);this.engine2.start();
+    this.jetGain=this.ctx.createGain();this.jetGain.gain.value=.001;this.jetGain.connect(this.master);this.jetFilter=this.ctx.createBiquadFilter();this.jetFilter.type="bandpass";this.jetFilter.frequency.value=1150;this.jetFilter.Q.value=.45;this.jetFilter.connect(this.jetGain);
+    const jetBuffer=this.ctx.createBuffer(1,this.ctx.sampleRate*2,this.ctx.sampleRate),jetData=jetBuffer.getChannelData(0);for(let i=0;i<jetData.length;i++)jetData[i]=Math.random()*2-1;this.jetNoise=this.ctx.createBufferSource();this.jetNoise.buffer=jetBuffer;this.jetNoise.loop=true;this.jetNoise.connect(this.jetFilter);this.jetNoise.start();
+    this.jetTone=this.ctx.createOscillator();this.jetTone.type="sawtooth";this.jetTone.frequency.value=72;const jetToneGain=this.ctx.createGain();jetToneGain.gain.value=.06;this.jetTone.connect(jetToneGain);jetToneGain.connect(this.jetGain);this.jetTone.start();
     const silent=this.ctx.createBufferSource();silent.buffer=this.ctx.createBuffer(1,1,this.ctx.sampleRate);silent.connect(this.master);silent.start(0);
     this.next=this.ctx.currentTime;this.beat=0;this.ctx.resume?.();return true
   }
@@ -251,9 +255,10 @@ class AudioSystem{
   enable(){if(!this.init())return;this.master.gain.setTargetAtTime(.78,this.ctx.currentTime,.03);this.ctx.resume?.();const t=this.ctx.currentTime+.01;this.tone(660,t,.1,.14,"sine",this.music);this.tone(990,t+.08,.16,.14,"sine",this.music)}
   jump(){if(!this.init())return;this.ctx.resume?.();const t=this.ctx.currentTime,o=this.ctx.createOscillator(),v=this.ctx.createGain();o.type="sine";o.frequency.setValueAtTime(180,t);o.frequency.exponentialRampToValueAtTime(620,t+.11);o.frequency.exponentialRampToValueAtTime(280,t+.26);v.gain.setValueAtTime(.3,t);v.gain.exponentialRampToValueAtTime(.001,t+.3);o.connect(v);v.connect(this.master);o.start(t);o.stop(t+.31);this.noise(.08,.07,3200,t)}
   boost(){if(!this.init())return;this.ctx.resume?.();const t=this.ctx.currentTime;[180,270,405,610,820].forEach((f,i)=>this.tone(f,t+i*.045,.28,.18,"sawtooth",this.engineGain));this.noise(.55,.18,1900)}
+  jet(){if(!this.init())return;this.ctx.resume?.();const t=this.ctx.currentTime;[90,135,210,330,510].forEach((f,i)=>this.tone(f,t+i*.055,.42,.14,"sawtooth",this.jetGain));this.noise(.75,.22,950)}
   crash(){if(!this.init())return;this.ctx.resume?.();this.noise(.42,.42,650);const t=this.ctx.currentTime;this.tone(82,t,.48,.38,"sawtooth",this.engineGain);this.tone(47,t,.55,.28,"square",this.engineGain)}
   over(){if(!this.init())return;const t=this.ctx.currentTime;[392,294,220,147,82].forEach((f,i)=>this.tone(f,t+i*.16,.4,.18,"sawtooth"))}
-  update(){if(!this.ctx)return;if(this.ctx.state==="suspended")return;const powered=boostTimer>0||jetTimer>0,r=speed/1200;this.engine.frequency.setTargetAtTime(78+r*220+(powered?62:0),this.ctx.currentTime,.04);this.engine2.frequency.setTargetAtTime(78+r*220,this.ctx.currentTime,.05);this.filter.frequency.setTargetAtTime(460+r*1900,this.ctx.currentTime,.05);this.engineGain.gain.setTargetAtTime(running?.11+(powered?.06:0):.001,this.ctx.currentTime,.08);const chords=[[220,261.63,329.63],[174.61,220,261.63],[261.63,329.63,392],[196,246.94,293.66]],bassRoots=[55,43.65,65.41,49],lead=[440,523.25,659.25,783.99,659.25,523.25,880,783.99,659.25,587.33,523.25,659.25,987.77,880,783.99,659.25];while(running&&this.next<this.ctx.currentTime+.14){const step=this.beat%16,bar=Math.floor(this.beat/16)%4,t=this.next;if(step===0)this.chord(chords[bar],t,1.15);if(step%4===0)this.kick(t);if(step===4||step===12)this.snare(t);this.hat(t,step===15);if(step%2===0)this.tone(bassRoots[bar]*(step===6||step===14?2:1),t,.11,.12,"sawtooth",this.music);if([1,3,5,7,9,11,13,15].includes(step))this.tone(lead[(step+bar*3)%16],t,.09,powered?.075:.055,"square",this.music);this.next+=powered?.075:.095;this.beat++}}
+  update(){if(!this.ctx)return;if(this.ctx.state==="suspended")return;const powered=boostTimer>0||jetTimer>0,r=speed/1200;this.engine.frequency.setTargetAtTime(78+r*220+(powered?62:0),this.ctx.currentTime,.04);this.engine2.frequency.setTargetAtTime(78+r*220,this.ctx.currentTime,.05);this.filter.frequency.setTargetAtTime(460+r*1900,this.ctx.currentTime,.05);this.engineGain.gain.setTargetAtTime(running?.11+(powered?.06:0):.001,this.ctx.currentTime,.08);this.jetGain.gain.setTargetAtTime(running&&jetTimer>0?.16:.001,this.ctx.currentTime,.12);this.jetFilter.frequency.setTargetAtTime(950+speed*.35,this.ctx.currentTime,.1);this.jetTone.frequency.setTargetAtTime(68+speed*.035,this.ctx.currentTime,.1);const chords=[[220,261.63,329.63],[174.61,220,261.63],[261.63,329.63,392],[196,246.94,293.66]],bassRoots=[55,43.65,65.41,49],lead=[440,523.25,659.25,783.99,659.25,523.25,880,783.99,659.25,587.33,523.25,659.25,987.77,880,783.99,659.25];while(running&&this.next<this.ctx.currentTime+.14){const step=this.beat%16,bar=Math.floor(this.beat/16)%4,t=this.next;if(step===0)this.chord(chords[bar],t,1.15);if(step%4===0)this.kick(t);if(step===4||step===12)this.snare(t);this.hat(t,step===15);if(step%2===0)this.tone(bassRoots[bar]*(step===6||step===14?2:1),t,.11,.12,"sawtooth",this.music);if([1,3,5,7,9,11,13,15].includes(step))this.tone(lead[(step+bar*3)%16],t,.09,powered?.075:.055,"square",this.music);this.next+=powered?.075:.095;this.beat++}}
 }
 const audio=new AudioSystem();
 
@@ -263,7 +268,7 @@ function spawn(){
   const count=candidates.length>1&&Math.random()<Math.min(.88,.7+elapsed*.004)?2:1;
   const chosen=[candidates[0]];if(count===2){const second=candidates.find(lane=>Math.abs(lane-chosen[0])>=3);if(second!==undefined)chosen.push(second)}
   for(const lane of chosen){const o=createObstacle(obstacleKinds[Math.floor(Math.random()*obstacleKinds.length)]);o.position.set(laneX[lane],0,-102);scene.add(o);obstacles.push(o);}
-  if(elapsed-lastPickupAt>4.4&&pickups.length===0&&Math.random()<.52){const wantsJet=Math.random()<.42&&jetTimer<=0, p=wantsJet?createJetPickup():createBoostPickup();p.position.x=laneX[safeLane];p.position.z=-98;scene.add(p);pickups.push(p);lastPickupAt=elapsed}
+  if(elapsed-lastPickupAt>4.4&&pickups.length===0&&flightY<.8&&Math.random()<.52){const kind=choosePickupKind(Math.random(),lastPickupKind,pickupKindStreak,jetTimer>0),p=kind==="jet"?createJetPickup():createBoostPickup();pickupKindStreak=kind===lastPickupKind?pickupKindStreak+1:1;lastPickupKind=kind;p.position.x=laneX[safeLane];p.position.z=-98;scene.add(p);pickups.push(p);lastPickupAt=elapsed}
 }
 function spawnFruit(){
   const f=createFruitObstacle(), lane=Math.floor(Math.random()*laneX.length), spawnZ=-68-Math.random()*12, travelTime=(car.position.z-spawnZ)/(Math.max(700,speed)*.08), targetY=Math.random()<.62?f.userData.radius:5.5+Math.random()*1.8;
@@ -278,7 +283,7 @@ function applyDamage(source){
   energy=Math.max(0,energy-10);invincible=1.05;shake=.42;ui.energy.style.width=energy+"%";audio.crash();navigator.vibrate?.([55,30,75]);if(energy<=0)endGame();
 }
 function hitGroundObstacle(o){
-  if(o.userData.hit||invincible>0||!groundObstacleCanDamage({jetTimer,flightY,jumpY,impactY:carMotion.impactY,jumpable:o.userData.jumpable,clearance:o.userData.clearance}))return;
+  if(o.userData.hit||invincible>0||!groundObstacleCanDamage({jetTimer,flightY,jumpY,impactY:carMotion.impactY,jumpable:o.userData.jumpable,clearance:o.userData.clearance,tallCharacter:o.userData.tallCharacter,obstacleMinY:o.userData.obstacleMinY,obstacleMaxY:o.userData.obstacleMaxY,carCenterY:car.position.y+.34}))return;
   if(Math.abs(o.position.z-car.position.z)<1.85&&Math.abs(o.position.x-car.position.x)<o.userData.radius+.3)applyDamage(o);
 }
 function hitFruit(f){
@@ -297,10 +302,10 @@ function updateWorld(dt){
   for(const detail of floorDetails){detail.position.z+=units;if(detail.position.z>25)detail.position.z-=176;}
   for(const prop of scenery){prop.position.z+=units*.62;if(prop.position.z>34)prop.position.z-=190;}
   spawnClock-=dt;if(spawnClock<=0){spawn();spawnClock=Math.max(.46,.62-elapsed*.0015)*(.94+Math.random()*.14);}
-  fruitClock-=dt;if(elapsed>2.5&&fruitClock<=0){spawnFruit();fruitClock=1.45+Math.random()*1.15;}
+  fruitClock-=dt;if(elapsed>3.5&&fruitClock<=0){spawnFruit();fruitClock=3.8+Math.random()*2.8;}
   for(let i=obstacles.length-1;i>=0;i--){const o=obstacles[i],data=o.userData;o.position.z+=units;o.rotation.y+=data.spin*dt;if(data.hit){o.position.x+=data.knockX*dt;data.knockX*=Math.pow(.08,dt);data.knockY-=14*dt;data.visualY+=data.knockY*dt;if(data.visualY<=data.poseY){data.visualY=data.poseY;data.knockY=Math.abs(data.knockY)>.9?Math.abs(data.knockY)*.26:0}data.visual.position.y=data.visualY;data.visual.rotation.z+=data.knockSpin*dt;data.knockSpin*=Math.pow(.1,dt);const lift=data.visualY-data.poseY;data.blob.material.opacity=data.blobOpacity/(1+lift*.8);data.blob.scale.x=1+lift*.08;data.blob.scale.y=data.blobScaleY*(1+lift*.08)}hitGroundObstacle(o);if(o.position.z>15){disposeObject(o);obstacles.splice(i,1);}}
   for(let i=fruits.length-1;i>=0;i--){const f=fruits[i],data=f.userData;f.position.z+=units;f.position.x+=data.vx*dt;data.vx*=Math.pow(.16,dt);if(!data.grounded){data.vy-=data.gravity*dt;f.position.y+=data.vy*dt;f.rotation.x+=data.spinX*dt;f.rotation.z+=data.spinZ*dt;if(f.position.y<=data.radius){f.position.y=data.radius;if(Math.abs(data.vy)>2.2){data.vy=-data.vy*.24;data.spinX*=.7;data.spinZ*=.7}else{data.vy=0;data.grounded=true}}}else{data.spinX*=Math.pow(.06,dt);data.spinZ*=Math.pow(.06,dt)}hitFruit(f);if(f.position.z>18||Math.abs(f.position.x)>18){disposeObject(f);fruits.splice(i,1);}}
-  for(let i=pickups.length-1;i>=0;i--){const p=pickups[i];p.position.z+=units;p.rotation.y+=dt*2.6;p.position.y=p.userData.baseY+Math.sin(elapsed*4+p.userData.phase)*.24;if(flightY<.8&&Math.abs(p.position.z-car.position.z)<2&&Math.abs(p.position.x-car.position.x)<1.05){if(p.userData.kind==="jet"){jetTimer=7;boostTimer=0}else boostTimer=5;audio.boost();navigator.vibrate?.([35,25,70]);disposeObject(p);pickups.splice(i,1);continue}if(p.position.z>15){disposeObject(p);pickups.splice(i,1)}}
+  for(let i=pickups.length-1;i>=0;i--){const p=pickups[i];p.position.z+=units;p.rotation.y+=dt*2.6;p.position.y=p.userData.baseY+Math.sin(elapsed*4+p.userData.phase)*.24;if(flightY<.8&&Math.abs(p.position.z-car.position.z)<2&&Math.abs(p.position.x-car.position.x)<1.05){if(p.userData.kind==="jet"){jetTimer=7;boostTimer=0;audio.jet()}else{boostTimer=5;audio.boost()}navigator.vibrate?.([35,25,70]);disposeObject(p);pickups.splice(i,1);continue}if(p.position.z>15){disposeObject(p);pickups.splice(i,1)}}
   const jetActive=jetTimer>0||flightY>.35,boostActive=boostTimer>0,displayKmh=Math.min(300,Math.round(165+Math.max(0,speed-700)*135/900));distance+=speed*dt/38;ui.distance.textContent=String(Math.floor(distance)).padStart(5,"0");ui.speed.textContent=String(displayKmh).padStart(3,"0");ui.boostState.classList.toggle("show",jetActive||boostActive);ui.boostState.classList.toggle("jet",jetActive);ui.boostState.textContent=jetTimer>0?`JET FLIGHT ${Math.ceil(jetTimer)}s`:jetActive?"SOFT LANDING":boostActive?`BOOST ${Math.ceil(boostTimer)}s`:"READY";
   for(const f of car.userData.flames){f.material.opacity=jetActive?.92:boostActive?.84:0;f.scale.y=(jetActive?1.05:.75)+Math.random()*.6;}for(const part of car.userData.jetParts)part.visible=jetActive;
   car.visible=!cockpitView&&!(invincible>0&&Math.floor(invincible*12)%2===0);const targetFov=cockpitView?(jetActive?86:77):(jetActive?75:64);camera.fov+=(targetFov-camera.fov)*dt*5;camera.updateProjectionMatrix();audio.update();
@@ -315,7 +320,7 @@ function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;updateWorld(
 
 function disposeObject(o){scene.remove(o);o.traverse(n=>{n.geometry?.dispose();if(n.material?.map)n.material.map.dispose();n.material?.dispose()})}
 function clearObstacles(){for(const list of[obstacles,pickups,fruits])while(list.length)disposeObject(list.pop())}
-function startGame(){audio.startRace();running=true;elapsed=distance=0;energy=100;baseSpeed=speed=700;spawnClock=.56;fruitClock=2.2;boostTimer=jetTimer=flightY=flightV=jumpY=jumpV=0;lastPickupAt=-20;invincible=0;safeLane=2;Object.assign(carMotion,{x:0,vx:0,recoil:0,impactY:0,impactV:0,impactRoll:0,impactPitch:0});car.position.set(0,0,3.2);car.rotation.set(0,0,0);car.userData.jetParts.forEach(part=>part.visible=false);car.userData.flames.forEach(flame=>flame.material.opacity=0);car.visible=!cockpitView;cockpit.visible=cockpitView;clearObstacles();ui.energy.style.width="100%";ui.boostState.classList.remove("show","jet");ui.boostState.textContent="READY";ui.finalScore.classList.remove("show");ui.eyebrow.textContent="";ui.title.innerHTML="MINI<em>Racer</em>";ui.tagline.textContent="";ui.start.textContent="ENGINE START";ui.overlay.classList.add("hidden")}
+function startGame(){audio.startRace();running=true;elapsed=distance=0;energy=100;baseSpeed=speed=700;spawnClock=.56;fruitClock=4.5;boostTimer=jetTimer=flightY=flightV=jumpY=jumpV=0;lastPickupAt=-20;lastPickupKind="";pickupKindStreak=0;invincible=0;safeLane=2;Object.assign(carMotion,{x:0,vx:0,recoil:0,impactY:0,impactV:0,impactRoll:0,impactPitch:0});car.position.set(0,0,3.2);car.rotation.set(0,0,0);car.userData.jetParts.forEach(part=>part.visible=false);car.userData.flames.forEach(flame=>flame.material.opacity=0);car.visible=!cockpitView;cockpit.visible=cockpitView;clearObstacles();ui.energy.style.width="100%";ui.boostState.classList.remove("show","jet");ui.boostState.textContent="READY";ui.finalScore.classList.remove("show");ui.eyebrow.textContent="";ui.title.innerHTML="MINI<em>Racer</em>";ui.tagline.textContent="";ui.start.textContent="ENGINE START";ui.overlay.classList.add("hidden")}
 function endGame(){if(!running)return;running=false;speed=0;audio.over();navigator.vibrate?.([100,50,100,50,180]);ui.finalDistance.textContent=Math.floor(distance)+" m";ui.finalScore.classList.add("show");ui.eyebrow.textContent="ENGINE OVERHEATED";ui.title.innerHTML="RACE<em>OVER</em>";ui.tagline.textContent=distance>1500?"거대한 세상을 아주 멀리 달렸어요!":"다시 도전할까요?";ui.start.textContent="RESTART RACE";setTimeout(()=>ui.overlay.classList.remove("hidden"),550)}
 function jumpCar(){if(!running||jumpY>0||jetTimer>0||flightY>.35)return;jumpV=6.1;audio.jump();navigator.vibrate?.(25)}
 function toggleView(){cockpitView=!cockpitView;cockpit.visible=cockpitView;car.visible=!cockpitView;ui.viewToggle.textContent=cockpitView?"👁 운전석":"🚗 외부 시점";ui.viewToggle.setAttribute("aria-pressed",String(cockpitView))}
