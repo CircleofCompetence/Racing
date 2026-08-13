@@ -1,6 +1,13 @@
 export const JET_ALTITUDE = 6.2;
 export const GROUND_CLEARANCE = .7;
 
+export function displayedSpeed(baseSpeed, boostActive=false, jetActive=false) {
+  const progress = Math.max(0, Math.min(1, (baseSpeed - 700) / 425));
+  if (jetActive) return Math.round(300 + progress * 33);
+  if (boostActive) return Math.round(250 + progress * 27);
+  return Math.round(165 + progress * 57);
+}
+
 export function flightMotionStep(currentAltitude, currentVelocity, jetActive, dt) {
   const targetAltitude = jetActive ? JET_ALTITUDE : 0;
   const response = jetActive ? 3.8 : 3.2;

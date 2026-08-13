@@ -23,7 +23,7 @@ test("game rules include Jet flight, falling fruit, and impact damage", async ()
   assert.match(js, /groundObstacleCanDamage/);
   assert.match(js, /energy=Math\.max\(0,energy-10\)/);
   assert.match(js, /baseSpeed=Math\.min\(1125,700\+elapsed\*6\.5\)/);
-  assert.match(js, /Math\.min\(300,Math\.round/);
+  assert.match(js, /displayedSpeed\(baseSpeed,boostActive,jetTimer>0\)/);
   assert.match(js, /TorusGeometry\(1\.28,\.3,14,32\)/);
   assert.doesNotMatch(js, /handle\.rotation\.y=Math\.PI\/2/);
   assert.match(js, /g\.scale\.setScalar\(\.46\)/);
@@ -70,7 +70,7 @@ test("game rules include Jet flight, falling fruit, and impact damage", async ()
   assert.match(js, /o\.frequency\.exponentialRampToValueAtTime\(620/);
   assert.match(js, /function makeCockpit\(\)/);
   assert.match(js, /function toggleView\(\)/);
-  assert.match(js, /cockpitView\?\(jetActive\?86:77\)/);
+  assert.match(js, /cockpitView\?\(jetActive\?91:boostActive\?84:77\)/);
   assert.match(js, /characterTypes=\["duck","robot","teddy","bunny"\]/);
   assert.match(js, /Math\.min\(\.88,\.7\+elapsed\*\.004\)/);
   assert.match(js, /Math\.max\(\.46,\.62-elapsed\*\.0015\)/);

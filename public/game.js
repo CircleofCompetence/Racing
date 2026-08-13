@@ -1,4 +1,4 @@
-import { choosePickupKind, fallingFruitSpawnY, flightMotionStep, fruitHitsCar, groundObstacleCanDamage, impactDirections } from "./game-physics.js";
+import { choosePickupKind, displayedSpeed, fallingFruitSpawnY, flightMotionStep, fruitHitsCar, groundObstacleCanDamage, impactDirections } from "./game-physics.js";
 
 let THREE;
 try {
@@ -291,7 +291,7 @@ function hitFruit(f){
   if(fruitHitsCar({x:f.position.x,y:f.position.y,z:f.position.z,radius},{x:car.position.x,y:carCenterY,z:car.position.z}))applyDamage(f);
 }
 function updateWorld(dt){
-  if(!running)return;elapsed+=dt;invincible=Math.max(0,invincible-dt);boostTimer=Math.max(0,boostTimer-dt);jetTimer=Math.max(0,jetTimer-dt);baseSpeed=Math.min(1125,700+elapsed*6.5);speed=baseSpeed+(boostTimer>0?475:0)+(jetTimer>0?360:0);const units=speed*.08*dt;
+  if(!running)return;elapsed+=dt;invincible=Math.max(0,invincible-dt);boostTimer=Math.max(0,boostTimer-dt);jetTimer=Math.max(0,jetTimer-dt);baseSpeed=Math.min(1125,700+elapsed*6.5);speed=baseSpeed+(boostTimer>0?475:0)+(jetTimer>0?800:0);const units=speed*.08*dt;
   const dir=(control.left?-1:0)+(control.right?1:0);carMotion.vx+=dir*dt*34;carMotion.vx*=Math.pow(.025,dt);carMotion.x=THREE.MathUtils.clamp(carMotion.x+carMotion.vx*dt,-6.25,6.25);car.position.x+=(carMotion.x-car.position.x)*dt*15;carMotion.recoil*=Math.pow(.025,dt);car.position.z=3.2+carMotion.recoil;
   if(jetTimer>0){jumpY=jumpV=0} else {jumpV-=18*dt;jumpY+=jumpV*dt;if(jumpY<=0){jumpY=0;jumpV=0}}
   ({altitude:flightY,velocity:flightV}=flightMotionStep(flightY,flightV,jetTimer>0,dt));
@@ -306,9 +306,9 @@ function updateWorld(dt){
   for(let i=obstacles.length-1;i>=0;i--){const o=obstacles[i],data=o.userData;o.position.z+=units;o.rotation.y+=data.spin*dt;if(data.hit){o.position.x+=data.knockX*dt;data.knockX*=Math.pow(.08,dt);data.knockY-=14*dt;data.visualY+=data.knockY*dt;if(data.visualY<=data.poseY){data.visualY=data.poseY;data.knockY=Math.abs(data.knockY)>.9?Math.abs(data.knockY)*.26:0}data.visual.position.y=data.visualY;data.visual.rotation.z+=data.knockSpin*dt;data.knockSpin*=Math.pow(.1,dt);const lift=data.visualY-data.poseY;data.blob.material.opacity=data.blobOpacity/(1+lift*.8);data.blob.scale.x=1+lift*.08;data.blob.scale.y=data.blobScaleY*(1+lift*.08)}hitGroundObstacle(o);if(o.position.z>15){disposeObject(o);obstacles.splice(i,1);}}
   for(let i=fruits.length-1;i>=0;i--){const f=fruits[i],data=f.userData;f.position.z+=units;f.position.x+=data.vx*dt;data.vx*=Math.pow(.16,dt);if(!data.grounded){data.vy-=data.gravity*dt;f.position.y+=data.vy*dt;f.rotation.x+=data.spinX*dt;f.rotation.z+=data.spinZ*dt;if(f.position.y<=data.radius){f.position.y=data.radius;if(Math.abs(data.vy)>2.2){data.vy=-data.vy*.24;data.spinX*=.7;data.spinZ*=.7}else{data.vy=0;data.grounded=true}}}else{data.spinX*=Math.pow(.06,dt);data.spinZ*=Math.pow(.06,dt)}hitFruit(f);if(f.position.z>18||Math.abs(f.position.x)>18){disposeObject(f);fruits.splice(i,1);}}
   for(let i=pickups.length-1;i>=0;i--){const p=pickups[i];p.position.z+=units;p.rotation.y+=dt*2.6;p.position.y=p.userData.baseY+Math.sin(elapsed*4+p.userData.phase)*.24;if(flightY<.8&&Math.abs(p.position.z-car.position.z)<2&&Math.abs(p.position.x-car.position.x)<1.05){if(p.userData.kind==="jet"){jetTimer=7;boostTimer=0;audio.jet()}else{boostTimer=5;audio.boost()}navigator.vibrate?.([35,25,70]);disposeObject(p);pickups.splice(i,1);continue}if(p.position.z>15){disposeObject(p);pickups.splice(i,1)}}
-  const jetActive=jetTimer>0||flightY>.35,boostActive=boostTimer>0,displayKmh=Math.min(300,Math.round(165+Math.max(0,speed-700)*135/900));distance+=speed*dt/38;ui.distance.textContent=String(Math.floor(distance)).padStart(5,"0");ui.speed.textContent=String(displayKmh).padStart(3,"0");ui.boostState.classList.toggle("show",jetActive||boostActive);ui.boostState.classList.toggle("jet",jetActive);ui.boostState.textContent=jetTimer>0?`JET FLIGHT ${Math.ceil(jetTimer)}s`:jetActive?"SOFT LANDING":boostActive?`BOOST ${Math.ceil(boostTimer)}s`:"READY";
+  const jetActive=jetTimer>0||flightY>.35,boostActive=boostTimer>0,displayKmh=displayedSpeed(baseSpeed,boostActive,jetTimer>0);distance+=speed*dt/38;ui.distance.textContent=String(Math.floor(distance)).padStart(5,"0");ui.speed.textContent=String(displayKmh).padStart(3,"0");ui.boostState.classList.toggle("show",jetActive||boostActive);ui.boostState.classList.toggle("jet",jetActive);ui.boostState.textContent=jetTimer>0?`JET FLIGHT ${Math.ceil(jetTimer)}s`:jetActive?"SOFT LANDING":boostActive?`BOOST ${Math.ceil(boostTimer)}s`:"READY";
   for(const f of car.userData.flames){f.material.opacity=jetActive?.92:boostActive?.84:0;f.scale.y=(jetActive?1.05:.75)+Math.random()*.6;}for(const part of car.userData.jetParts)part.visible=jetActive;
-  car.visible=!cockpitView&&!(invincible>0&&Math.floor(invincible*12)%2===0);const targetFov=cockpitView?(jetActive?86:77):(jetActive?75:64);camera.fov+=(targetFov-camera.fov)*dt*5;camera.updateProjectionMatrix();audio.update();
+  car.visible=!cockpitView&&!(invincible>0&&Math.floor(invincible*12)%2===0);const targetFov=cockpitView?(jetActive?91:boostActive?84:77):(jetActive?80:boostActive?72:64);camera.fov+=(targetFov-camera.fov)*dt*5;camera.updateProjectionMatrix();audio.update();
 }
 function render(){
   const sx=shake>0?(Math.random()-.5)*shake:0,sy=shake>0?(Math.random()-.5)*shake*.35:0;shake*=.88;

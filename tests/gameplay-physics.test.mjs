@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   JET_ALTITUDE,
   choosePickupKind,
+  displayedSpeed,
   fallingFruitSpawnY,
   flightMotionStep,
   fruitHitsCar,
@@ -29,7 +30,7 @@ test("boost and Jet durations remain independent game rules", async () => {
   const source = await (await import("node:fs/promises")).readFile(new URL("../public/game.js", import.meta.url), "utf8");
   assert.match(source, /boostTimer=5/);
   assert.match(source, /jetTimer=7/);
-  assert.match(source, /speed=baseSpeed\+\(boostTimer>0\?475:0\)\+\(jetTimer>0\?360:0\)/);
+  assert.match(source, /speed=baseSpeed\+\(boostTimer>0\?475:0\)\+\(jetTimer>0\?800:0\)/);
   assert.match(source, /function createBoostPickup\(\)/);
   assert.match(source, /strokeText\("JET",256,132\)/);
   assert.match(source, /vy:-7-Math\.random\(\)\*3/);
@@ -37,6 +38,16 @@ test("boost and Jet durations remain independent game rules", async () => {
   assert.match(source, /fruitClock=3\.8\+Math\.random\(\)\*2\.8/);
   assert.match(source, /audio\.jet\(\)/);
   assert.match(source, /this\.jetNoise\.loop=true/);
+});
+
+test("speedometer bands match normal, boost, and faster Jet travel", () => {
+  assert.equal(displayedSpeed(700), 165);
+  assert.equal(displayedSpeed(1125), 222);
+  assert.equal(displayedSpeed(700, true), 250);
+  assert.equal(displayedSpeed(1125, true), 277);
+  assert.equal(displayedSpeed(700, false, true), 300);
+  assert.equal(displayedSpeed(1125, false, true), 333);
+  assert.ok(800 > 475);
 });
 
 test("a flying Jet clears ground props but collides with tall dolls at its altitude", () => {
